@@ -109,10 +109,9 @@ write.graph(preNetBBT,"preNetBBT.net",format=c("pajek"))
 #CODE FOR WRITING 1000 INFOMAPS IN INFOMAP FOLDER:
 #for i in {1..1000}; do ./pathToNetwork/[name].net /pathtoFolder/1000Infomaps[name]/
 #--out-name $i -2 --clu --map -s$i; done
-
 files<-vector()
 for (i in 1:1000){
-  files[i]<-paste(i,".clu",sep = "")
+  files[i]<-paste("Data/1000InfomapsPreBBT/",i,".clu",sep = "")
   
 }
 #setwd("..") #go to where the files are
@@ -138,16 +137,49 @@ for(i in 1:1000){
   nmiM[i,]<-comp(i)
   
 }
-no<-vector()
+
+mean(nmiM) #Normalized mutual information of pre-cluster solutions
+sd(nmiM) #Standard deviation of NMI
+
+files<-vector()
 for (i in 1:1000){
-  no[i]<-length(which(nmiM[i,]==1))
+  files[i]<-paste("Data/1000InfomapsPostBBT/",i,".clu",sep = "")
+  
+}
+csvs<-lapply(files,read.csv,skip=2,header=F,sep="")
+
+a<-matrix(data=0,nrow=1000,ncol=64)
+for (i in 1:1000){
+  a[i,]<-csvs[[i]][ order(csvs[[i]][,1]),2 ]
+  
 }
 
-#Get most frequent groupings
+comp<-function(j){
+  nmi<-vector()
+  for(i in 1:1000){
+    nmi[i]<-compare(a[i,],a[j,],method="nmi")  
+    
+  }
+  return(nmi)  
+} 
 
-setwd("1000InfomapsPostBBT") 
-postBBTgroup<-read.csv("1.clu",skip=2,header=F,sep="") #for us it was the first grouping.
+nmiM<-matrix(data=0,nrow=1000,ncol=1000)
+for(i in 1:1000){
+  nmiM[i,]<-comp(i)
+  
+}
+
+mean(nmiM)#Normalized mutual information of post-cluster solutions
+sd(nmiM)#Standard deviation of NMI
+
+
+#Get most frequent groupings
+postBBTgroup<-read.csv("Data/1000InfomapsPostBBT/1.clu",skip=2,header=F,sep="") #for us it was the first grouping.
 postBBTgroup<-postBBTgroup[order(postBBTgroup$V1),]
+preBBTgroup<-read.csv("Data/1000InfomapsPreBBT/2.clu",skip=2,header=F,sep="") #for us it was the first grouping.
+preBBTgroup<-preBBTgroup[order(preBBTgroup$V1),]
+compare(preBBTgroup$V2,postBBTgroup$V2,method="nmi") 
+
 attributesT<-read.csv("attributesT.csv")
 
 #ANALYSIS
