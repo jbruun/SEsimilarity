@@ -3,23 +3,25 @@
 
 
 
-setwd("/Data/")
-
-source("/R_scripts/backboneExtraction.r")
-source("/R_scripts/segregation.r")
-
-
-mydata<-read.csv("/Data/dataset.csv",sep=";")
-mydata$X<-c(1:length(mydata$Name))
-#mydata[is.na(mydata)] <- 0
-names(mydata)[25]<-"post48"
-names(mydata)[26]<-"post49"
-
 library(igraph)
+library(PMCMRplus)
+library(effsize)
+library(rcompanion)
+library(gplots)
+
+source("R_scripts/backboneExtraction.r")
+source("R_scripts/segregation.r")
+
+
+mydata<-read.csv("Data/dataset.csv",sep=";")
+mydata$X<-c(1:length(mydata$Name))
+
+
 
 #Respondent similarity network
-
-resp<-paste("R",c(1:length(mydata$X)),sep="")
+  #Name respondents
+resp<-paste("R",c(1:length(mydata$X)),sep="") 
+  #Function for calculating frequencies (here equated with probabilities) of responses
 probs<-function(mydata,n){
   a<-as.numeric(names(table(mydata[,n])))
   p<-as.numeric(table(mydata[,n],useNA = "always")/length(resp))
@@ -30,14 +32,16 @@ probs<-function(mydata,n){
   x[which(is.na(mydata[,n]))]<-p[6]
   return(x)
 }
-
+  #Identify which columns contain pre and which contain post responses. 
 names(mydata[3:14]) #Columns for pre
 names(mydata[15:26]) #Columns for post
-pre<-mydata[3:14]
+post<-mydata[15:26] #Responses to post survey questions
+post[is.na(post)]<-100 #R does not like to perform calculations with NAs
+pre<-mydata[3:14] # We will compare pre community structure with post community structure
 pre[is.na(pre)]<-100
-post<-mydata[15:26]
-post[is.na(post)]<-100
 
+
+  #Function which transforms frequencies/probabilities to information (bits)
 pmat<-function(data){
 pmat<-matrix(0,ncol=length(data),nrow=length(data[,1]))
 for(j in 1:length(data)){
@@ -48,6 +52,8 @@ infmat<--log2(pmat)
 return(infmat)
 }
 
+  #Function for calculating similarities between respondents
+  #The function uses Lin's (1998) information theoretical measure. 
 simRes<-function(i,j,infmat,d){
   y<-infmat[i,]
   overlap<-sum(y[which(d[i,1:12]==d[j,1:12])])
@@ -57,6 +63,7 @@ simRes<-function(i,j,infmat,d){
   return(sim)
 }
 
+  #Function for calculating similarity between k'th respondent and everyone else
 simResk<-function(k,inf,d){
     simVec<-vector()
   for(i in 1:length(resp)){
@@ -65,6 +72,7 @@ simResk<-function(k,inf,d){
   return(simVec)
 }
 
+  #Function for making similarity matrix. 
 simMatrix<-function(d){
   inf<-pmat(d)
   similarityMatrix<-matrix(data=0,ncol=length(d[,1]),nrow=length(d[,1]))
@@ -75,7 +83,7 @@ simMatrix<-function(d){
   return(similarityMatrix)
 }
 
-preSim<-simMatrix(pre)
+  #Functions are now used to create a post similarity network
 postSim<-simMatrix(post)
 respTot<-resp
 respT<-resp[mydata$control=="n"]
@@ -85,40 +93,17 @@ resp<-respT
 preSimT<-simMatrix(pre[mydata$control=="n",])
 postSimT<-simMatrix(post[mydata$control=="n",])
 
-resp<-respC
-preSimC<-simMatrix(pre[mydata$control=="y",])
-postSimC<-simMatrix(post[mydata$control=="y",])
-
-preNet<-graph.adjacency(preSim,diag=F,weighted=T)
-postNet<-graph.adjacency(postSim,diag=F,weighted=T)
 preNetT<-graph.adjacency(preSimT,diag=F,weighted=T)
 postNetT<-graph.adjacency(postSimT,diag=F,weighted=T)
-preNetC<-graph.adjacency(preSimC,diag=F,weighted=T)
-postNetC<-graph.adjacency(postSimC,diag=F,weighted=T)
-resp<-paste("R",c(1:length(mydata$X)),sep="")
-V(preNet)$id<-resp
-V(postNet)$id<-resp
 V(preNetT)$id<-respT
 V(postNetT)$id<-respT
-V(preNetC)$id<-respC
-V(postNetC)$id<-respC
 
-
-preNetBB<-backboneNetwork(preNet,0.015,2)
-postNetBB<-backboneNetwork(postNet,0.015,2)
-preNetBBT<-backboneNetwork(preNetT,0.0176,2)
+#Extract backbone networks
+preNetBBT<-backboneNetwork(preNetT,0.0176,2) #Alpha value set to minimum value that keeps the network connected
 postNetBBT<-backboneNetwork(postNetT,0.0335,2)# This is the network we focus on in the article.
-preNetBBC<-backboneNetwork(preNetC,0.04,2)
-postNetBBC<-backboneNetwork(postNetC,0.0455,2) 
-write.graph(preNetBB,"preNetBB.net",format=c("pajek"))
-write.graph(postNetBB,"postNetBB.net",format=c("pajek"))
-write.graph(preNetBBT,"preNetBBT.net",format=c("pajek"))
 write.graph(postNetBBT,"postNetBBT.net",format=c("pajek"))
-write.graph(preNetBBC,"preNetBBC.net",format=c("pajek"))
-write.graph(postNetBBC,"postNetBBC.net",format=c("pajek"))
+write.graph(preNetBBT,"preNetBBT.net",format=c("pajek"))
 
-
-  
 
 #1000 infomaps
 #CODE FOR WRITING 1000 INFOMAPS IN INFOMAP FOLDER:
