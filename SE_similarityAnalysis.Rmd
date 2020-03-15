@@ -628,6 +628,32 @@ resampleX(as.numeric(supergroups),attributesT$postGroup,2,1000)
 
 ##Entropy analysis
 ```{r entropy-analysis, echo=F}
+Sa<-vector()
+for(i in 1:12){
+  Sa[i]<--sum(sgAPost[i,2:7]*log2(sgAPost[i,2:7]),na.rm=T)
+  
+}
+
+Sb<-vector()
+for(i in 1:12){
+  Sb[i]<--sum(sgBPost[i,2:7]*log2(sgBPost[i,2:7]),na.rm=T)
+  
+}
+
+Sc<-vector()
+for(i in 1:12){
+  Sc[i]<--sum(sgCPost[i,2:7]*log2(sgCPost[i,2:7]),na.rm=T)
+  
+}
+
+Smax<--log2(1/6)
+
+
+plot(Sa/Smax,ylim=c(0,1), pch="A", ylab="S/Smax", xlab="Question", xaxt="n", main="Entropy of distributions")
+axis(1, at=c(1:12), labels=c("Q38", "Q39", "Q40", "Q41", "Q42", "Q43", "Q44", "Q45", "Q46", "Q47", "Q48", "Q49"))
+points(Sb/Smax,pch="B",col="blue")
+points(Sc/Smax,pch="C",col="red")
+
 ```
 ##Single question analyses
 ```{r single-question-analysis, echo=F}
