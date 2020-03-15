@@ -626,9 +626,17 @@ for(i in 1:12){
 
 Smax<--log2(1/6)
 
+<<<<<<< HEAD
 plot(Sa/Smax,ylim=c(0,1), main="Test", ylab="S/Smax", xlab="Question")
 points(Sb/Smax,pch="B",col="blue")
 points(Sc/Smax,pch="C",col="red")
+=======
+plot(Sa,ylim=c(0,1),pch="A", ylab="S/Smax", xlab="Question")
+points(Sb/Smax,pch="B",col="blue")
+points(Sc/Smax,pch="C",col="red")
+
+plot(Sa/Smax,ylim=c(0,1),pch="A")
+>>>>>>> 5f9841e7cbed05865f1e5ac8faadac463f486249
 
 
 

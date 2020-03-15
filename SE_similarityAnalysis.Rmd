@@ -259,6 +259,7 @@ modularity(postNetBBT,membership = supergroups)
 # 0.4645336 PG7 -> C R
 ```
 
+<<<<<<< HEAD
 ## Describe optimal super group solution
 ```{r describe-supergroup, echo=F}
 AdjMat<-get.adjacency(postNetBBT,attr = "weight",sparse = F,type = "upper")
@@ -313,6 +314,10 @@ DescribeSuperGroups<-data.frame(row.names=c("A","B","C","Total"),N_teachers=c(as
 
 wilcox.test(allInt,allExt)
 t.test(allInt,allExt)
+=======
+## Evaluate quality of Optimal Super Group Solution
+```{r quality-super-group, echo=F}
+>>>>>>> 5f9841e7cbed05865f1e5ac8faadac463f486249
 
 ```
 
