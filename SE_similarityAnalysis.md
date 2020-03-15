@@ -388,28 +388,51 @@ source("R_scripts/segregation.r")
 
 ## Segregation analysis
 
-    ## [1] 10.38148
+    ## [1] 9.570475
 
-    ## [1] 0.2851449
+    ## [1] 0.2193839
 
-    ## [1] -0.07454602
+    ## [1] -0.01439376
 
-    ## [1] -0.614124
+    ## [1] -0.5518988
 
-    ## [1] -0.5044833
+    ## [1] -0.5093995
 
-    ## [1] 1.125445
+    ## [1] 1.361651
 
-    ## [1] 2.642014
+    ## [1] 2.606083
 
-    ## [1] 0.03949462
+    ## [1] 0.07366936
 
-    ## [1] 1.154585
+    ## [1] 1.13151
 
-    ## [1] 2.900518
+    ## [1] 2.919105
 
-    ## [1] 15.00924
+    ## [1] 15.40443
 
 \#\#Entropy analysis
+
 ![](SE_similarityAnalysis_files/figure-gfm/entropy-analysis-1.png)<!-- -->
+
 \#\#Single question analyses
+![](SE_similarityAnalysis_files/figure-gfm/single-question-analysis-1.png)<!-- -->![](SE_similarityAnalysis_files/figure-gfm/single-question-analysis-2.png)<!-- -->![](SE_similarityAnalysis_files/figure-gfm/single-question-analysis-3.png)<!-- -->
+
+    ##        4 
+    ## 1.863627
+
+    ##       4 
+    ## 2.85216
+
+    ##        3 
+    ## 2.589461
+
+    ##       3 
+    ## -1.7826
+
+![](SE_similarityAnalysis_files/figure-gfm/single-question-analysis-4.png)<!-- -->
+
+    ## 5 - Agree 
+    ##   2.13912
+
+    ## 5 - Agree 
+    ##  3.021038

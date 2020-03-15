@@ -645,12 +645,9 @@ plot(Sa/Smax,ylim=c(0,1),pch="A")
 
 
 #SHIFT ANALYSIS
-shifts<-c(as.numeric(sgADiff[,2:7]),as.numeric(sgBDiff[,2:7]),as.numeric(sgCDiff[,2:7]))
+shifts<-c(as.numeric(sgADiff),as.numeric(sgBDiff),as.numeric(sgCDiff))
 hist(shifts)
 qqnorm(shifts)
-mean(shifts)
-sd(shifts)
-
 par(mfrow=c(3,2))
 barplot(rbind(sgAPre[3,2:7],sgBPre[3,2:7],sgCPre[3,2:7]),beside=T,main="Q40: Pre Intervention",xlab="Teacher response",ylab="Frequency",legend=c("A","B","C"))
 barplot(rbind(sgAPre[12,2:7],sgBPre[12,2:7],sgCPre[12,2:7]),beside=T,main="Q49R: Pre Intervention",xlab="Teacher response",ylab="Frequency")
@@ -665,8 +662,16 @@ sgBDiff[3,5]/sd(shifts)
 sgCDiff[3,4]/sd(shifts)
 sgBDiff[3,4]/sd(shifts)
 
+barplot(rbind(sgAPre[5,2:7],sgBPre[5,2:7],sgCPre[5,2:7]),beside=T,main="Q42: Pre Intervention",xlab="Teacher response",ylab="Frequency",legend=c("A","B","C"))
+barplot(rbind(sgAPre[9,2:7],sgBPre[9,2:7],sgCPre[9,2:7]),beside=T,main="Q46R*: Pre Intervention",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[5,2:7],sgBPost[5,2:7],sgCPost[5,2:7]),beside=T,main="Q42: Post Intervention",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[9,2:7],sgBPost[9,2:7],sgCPost[9,2:7]),beside=T,main="Q46R*: Post Intervention",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[5,2:7],sgBDiff[5,2:7],sgCDiff[5,2:7]),beside=T,main="Q42: Pre to post difference",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[9,2:7],sgBDiff[9,2:7],sgCDiff[9,2:7]),beside=T,main="Q46R*: Pre to post difference", xlab="Teacher response",ylab="Frequency")
 
 
+sgBDiff[5,6]/sd(shifts)
+sgCDiff[5,6]/sd(shifts)
 
 ####LWG###
 LWG<-vector()
