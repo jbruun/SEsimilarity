@@ -259,6 +259,63 @@ modularity(postNetBBT,membership = supergroups)
 # 0.4645336 PG7 -> C R
 ```
 
+## Describe optimal super group solution
+```{r describe-supergroup, echo=F}
+AdjMat<-get.adjacency(postNetBBT,attr = "weight",sparse = F,type = "upper")
+AdjMat[AdjMat==0]<-NA
+
+N<-table(supergroups)
+N_int<-c(length(which(!is.na(AdjMat[supergroups=="A",supergroups=="A"]))),
+         length(which(!is.na(AdjMat[supergroups=="B",supergroups=="B"]))),
+         length(which(!is.na(AdjMat[supergroups=="C",supergroups=="C"]))))
+
+mean_int<-c(mean(AdjMat[supergroups=="A",supergroups=="A"],na.rm=T),
+mean(AdjMat[supergroups=="B",supergroups=="B"],na.rm=T),
+mean(AdjMat[supergroups=="C",supergroups=="C"],na.rm=T))
+
+sd_int<-c(sd(AdjMat[supergroups=="A",supergroups=="A"],na.rm=T),
+  sd(AdjMat[supergroups=="B",supergroups=="B"],na.rm=T),
+  sd(AdjMat[supergroups=="C",supergroups=="C"],na.rm=T))
+
+N_ext<-c(length(which(!is.na(AdjMat[supergroups=="A",supergroups!="A"]))),
+         length(which(!is.na(AdjMat[supergroups=="B",supergroups!="B"]))),
+         length(which(!is.na(AdjMat[supergroups=="C",supergroups!="C"]))))
+
+mean_ext<-c(mean(AdjMat[supergroups=="A",supergroups!="A"],na.rm=T),
+  mean(AdjMat[supergroups=="B",supergroups!="B"],na.rm=T),
+  mean(AdjMat[supergroups=="C",supergroups!="C"],na.rm=T))
+
+sd_ext<-c(sd(AdjMat[supergroups=="A",supergroups!="A"],na.rm=T),
+  sd(AdjMat[supergroups=="B",supergroups!="B"],na.rm=T),
+  sd(AdjMat[supergroups=="C",supergroups!="C"],na.rm=T))
+
+
+
+allInt<-c(as.vector(AdjMat[supergroups=="A",supergroups=="A"]),
+  as.vector(AdjMat[supergroups=="B",supergroups=="B"]), 
+  as.vector(AdjMat[supergroups=="C",supergroups=="C"]))
+allInt<-allInt[!is.na(allInt)]
+N_int<-c(N_int,length(allInt))
+mean_int<-c(mean_int,mean(allInt))
+sd_int<-c(sd_int,sd(allInt))
+
+allExt<-c(as.vector(AdjMat[supergroups=="A",supergroups!="A"]),
+          as.vector(AdjMat[supergroups=="B",supergroups!="B"]), 
+          as.vector(AdjMat[supergroups=="C",supergroups!="C"]))
+allExt<-allExt[!is.na(allExt)]
+N_ext<-c(N_ext,length(allExt))
+mean_ext<-c(mean_ext,mean(allExt))
+sd_ext<-c(sd_ext,sd(allExt))
+
+DescribeSuperGroups<-data.frame(row.names=c("A","B","C","Total"),N_teachers=c(as.numeric(N),sum(as.numeric(N))),
+                                N_internal=N_int,Mean_internal=mean_int,SD_internal=sd_int,
+                                N_external=N_ext,Mean_external=mean_ext,SD_external=sd_ext)
+
+wilcox.test(allInt,allExt)
+t.test(allInt,allExt)
+
+```
+
 ## Characterise Super Groups
 ```{r characterise-super-groups, echo=F}
 ##CHARACTERISE SUPERGROUPS
@@ -515,8 +572,46 @@ barplot(rbind(sgADiff[12,2:7],sgBDiff[12,2:7],sgCDiff[12,2:7]),beside=T,main="Q4
 
 ```
 
+## Kruskal-Wallis and Nemenyi tests
+
+```{r kruskal-wallis-nemenyi, echo=F}
+ans38 <- kwAllPairsNemenyiTest(newdata$post38 ~ supergroups, dist="Chisquare")
+summary(ans38)
+ans39 <- kwAllPairsNemenyiTest(newdata$post39 ~ supergroups, dist="Chisquare")
+summary(ans39)
+ans40 <- kwAllPairsNemenyiTest(newdata$post40 ~ supergroups, dist="Chisquare")
+summary(ans40)
+ans41 <- kwAllPairsNemenyiTest(newdata$post41 ~ supergroups, dist="Chisquare")
+summary(ans41)
+ans42 <- kwAllPairsNemenyiTest(newdata$post42 ~ supergroups, dist="Chisquare")
+summary(ans42)
+ans43 <- kwAllPairsNemenyiTest(newdata$post43 ~ supergroups, dist="Chisquare")
+summary(ans43)
+
+ans44 <- kwAllPairsNemenyiTest(newdata$post44 ~ supergroups, dist="Chisquare")
+summary(ans44)
+ans45 <- kwAllPairsNemenyiTest(newdata$post45 ~ supergroups, dist="Chisquare")
+summary(ans45)
+ans46 <- kwAllPairsNemenyiTest(newdata$post46 ~ supergroups, dist="Chisquare")
+summary(ans46)
+ans47 <- kwAllPairsNemenyiTest(newdata$post47 ~ supergroups, dist="Chisquare")
+summary(ans47)
+ans48 <- kwAllPairsNemenyiTest(newdata$post48 ~ supergroups, dist="Chisquare")
+summary(ans48)
+ans49 <- kwAllPairsNemenyiTest(newdata$post49 ~ supergroups, dist="Chisquare")
+summary(ans49)
+```
 ## Segregation analysis
 ```{r segregation-analysis, echo=F}
+LWG<-vector()
+LWG[mydata$country=="DK"]<-1
+LWG[mydata$country=="CH"]<-2
+LWG[mydata$country=="FI"]<-3
+LWG[mydata$country=="CZ"]<-4
+LWG[mydata$country=="D"]<-5
+LWG[mydata$country=="F"]<-6
+
+LWG<-LWG[mydata$control=="n"]
 resampleX(as.numeric(supergroups),LWG,2,1000)
 resampleX(as.numeric(supergroups),attributesT$yearsTeaching,2,1000)
 resampleX(as.numeric(supergroups),attributesT$physics,2,1000)
@@ -531,7 +626,11 @@ resampleX(as.numeric(supergroups),attributesT$postGroup,2,1000)
 ```
 
 ##Entropy analysis
-
+```{r entropy-analysis, echo=F}
+```
 ##Single question analyses
+```{r single-question-analysis, echo=F}
+
+```
 
 
