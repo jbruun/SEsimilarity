@@ -1559,9 +1559,26 @@ source("R_scripts/segregation.r")
 
     ## [1] 0.5151299
 
-## Evaluate quality of Optimal Super Group Solution
+## Describe optimal super group solution
 
-    ## [1] "all is good"
+    ## 
+    ##  Wilcoxon rank sum test with continuity correction
+    ## 
+    ## data:  allInt and allExt
+    ## W = 925, p-value = 0.02827
+    ## alternative hypothesis: true location shift is not equal to 0
+
+    ## 
+    ##  Welch Two Sample t-test
+    ## 
+    ## data:  allInt and allExt
+    ## t = 3.13, df = 28.9, p-value = 0.003974
+    ## alternative hypothesis: true difference in means is not equal to 0
+    ## 95 percent confidence interval:
+    ##  0.01886764 0.09004173
+    ## sample estimates:
+    ## mean of x mean of y 
+    ## 0.5076376 0.4531829
 
 ## Characterise Super Groups
 
@@ -6900,27 +6917,27 @@ source("R_scripts/segregation.r")
 
 ## Segregation analysis
 
-    ## [1] 10.07702
+    ## [1] 10.34288
 
-    ## [1] 0.1726322
+    ## [1] 0.2602166
 
-    ## [1] -0.04604035
+    ## [1] -0.04856298
 
-    ## [1] -0.5590675
+    ## [1] -0.6225351
 
-    ## [1] -0.46269
+    ## [1] -0.5243017
 
-    ## [1] 1.175615
+    ## [1] 1.373225
 
-    ## [1] 2.739864
+    ## [1] 2.840936
 
-    ## [1] 0.01516158
+    ## [1] 0.04495266
 
-    ## [1] 1.113404
+    ## [1] 1.169159
 
-    ## [1] 2.895282
+    ## [1] 2.900712
 
-    ## [1] 15.66841
+    ## [1] 15.83347
 
 \#\#Entropy analysis
 
