@@ -5,6 +5,7 @@
 
 library(igraph)
 library(PMCMRplus)
+library(pgirmess)
 library(effsize)
 library(rcompanion)
 library(gplots)
@@ -179,28 +180,10 @@ postBBTgroup<-postBBTgroup[order(postBBTgroup$V1),]
 preBBTgroup<-read.csv("Data/1000InfomapsPreBBT/2.clu",skip=2,header=F,sep="") #for us it was the first grouping.
 preBBTgroup<-preBBTgroup[order(preBBTgroup$V1),]
 compare(preBBTgroup$V2,postBBTgroup$V2,method="nmi") 
-
-attributesT<-read.csv("attributesT.csv")
-
-#ANALYSIS
-attributes<-data.frame(mydata$ID,control=mydata$control,country=mydata$country,yearsTeaching=mydata$yearsTeaching,physics=mydata$Physics,chemistry=mydata$Chemistry,technology=mydata$Technology,biology=mydata$Biology,mathematics=mydata$Math,integrated=mydata$Integrated)
-attributes$subjects<-do.call(paste,c(attributes[,5:10],sep=""))
-
-before<-rowMeans(mydata[,3:14],na.rm=T)
-after<-rowMeans(mydata[,15:26],na.rm=T)
-
-beforeT<-before[mydata$control=="n"]
-afterT<-after[mydata$control=="n"]
-
-beforeC<-before[mydata$control=="y"]
-afterC<-after[mydata$control=="y"]
-
-attributesT<-attributes[mydata$control=="n",]
-
+attributesT<-read.csv("Data/attributesT.csv")
 attributesT$preGroup<-preBBTgroup$V2
 attributesT$postGroup<-postBBTgroup$V2
-attributesT$preScore<-beforeT
-attributesT$postScore<-afterT
+
 
 #BETWEEN AND WITHIN GROUP SIMILARITY
 #post BBT network
@@ -226,664 +209,312 @@ for (i in 1:12){
   gdiag[i]<-mean(gsim[[i]])
 }
 
+##FIND SUPERGROUPS
+
+supergroups<-vector(length = 64)
+supergroups[attributesT$postGroup==5|attributesT$postGroup==7|attributesT$postGroup==9|attributesT$postGroup==12]<-"A"
+supergroups[attributesT$postGroup==1|attributesT$postGroup==2|attributesT$postGroup==3|attributesT$postGroup==4]<-"B"
+supergroups[attributesT$postGroup==6|attributesT$postGroup==8|attributesT$postGroup==10|attributesT$postGroup==11]<-"C"
+supergroups<-as.factor(supergroups)
+modularity(postNetBBT,membership = supergroups)
+
+#0.4854486 Benchmark
+#0.4245728 PG6 -> B REJECTED
+#0.4532307 PG8 -> B R
+#0.4615967 PG10 -> B R
+#0.4676486 PG11 -> B R
+#0.4555447 PG6 -> A R
+#0.4900765 PG11 -> A ACCEPTED!
+
 supergroups<-vector(length = 64)
 supergroups[attributesT$postGroup==5|attributesT$postGroup==7|attributesT$postGroup==9|attributesT$postGroup==11|attributesT$postGroup==12]<-"A"
-supergroups[attributesT$postGroup==1|attributesT$postGroup==2|attributesT$postGroup==3|attributesT$postGroup==4]<-"B"
-supergroups[attributesT$postGroup==6|attributesT$postGroup==8|attributesT$postGroup==10]<-"C"
+supergroups[attributesT$postGroup==1|attributesT$postGroup==2|attributesT$postGroup==3]<-"B"
+supergroups[attributesT$postGroup==6|attributesT$postGroup==8|attributesT$postGroup==10|attributesT$postGroup==4]<-"C"
+supergroups<-as.factor(supergroups)
+modularity(postNetBBT,membership = supergroups)
 
+#0.4630206 PG6 -> A R
+#0.4392577 PG1 -> A R
+#0.4747686 PG1 -> C R
+#0.4766376 PG4 -> A R
+#0.5151299 PG4 -> C ACCEPTED!
 
-supergroupsWithC<-rep("D",93)
-supergroupsWithC[attributesT$mydata.ID[as.character(supergroups)=="A"]]<-"A"
-supergroupsWithC[attributesT$mydata.ID[supergroups=="B"]]<-"B"
-supergroupsWithC[attributesT$mydata.ID[supergroups=="C"]]<-"C"
+supergroups<-vector(length = 64)
+supergroups[attributesT$postGroup==5|attributesT$postGroup==7|attributesT$postGroup==9|attributesT$postGroup==11|attributesT$postGroup==12]<-"A"
+supergroups[attributesT$postGroup==1|attributesT$postGroup==2|attributesT$postGroup==3]<-"B"
+supergroups[attributesT$postGroup==6|attributesT$postGroup==8|attributesT$postGroup==10|attributesT$postGroup==4]<-"C"
+supergroups<-as.factor(supergroups)
+modularity(postNetBBT,membership = supergroups)
 
-#REPEATED MEASURES ANOVA
-resp<-c(1:93)
-preT<-data.frame(respondent=resp[mydata$control=="n"],group=supergroups,score=beforeT,condition="pre")
-preC<-data.frame(respondent=resp[mydata$control=="y"],group="D",score=beforeC,condition="pre")
-pre<-rbind(preT,preC)
+#0.4856266 PG3 -> A R
+#0.5044945 PG3 -> C R
+#0.5115255 PG11 -> C R
+#0.4645336 PG7 -> C R
+#0.4676486 PG5 -> B R
+#0.4898985 PG2 -> C R
+#0.4854041 PG1 -> C R
+#0.4571022 PG1 -> A R
+#0.49733 PG6-> A R
+#0.4916785 PG11 -> B R
+#0.4741901 PG6 -> B R
+# 0.4645336 PG7 -> C R
 
-postT<-data.frame(respondent=resp[mydata$control=="n"],group=supergroups,score=afterT,condition="post")
-postC<-data.frame(respondent=resp[mydata$control=="y"],group="D",score=afterC,condition="post")
-post<-rbind(postT,postC)
-tot<-rbind(pre,post)
-tot<-tot[-c(70,77,163,170),]
-se.aov <- with(tot, aov(score ~ condition * group + Error(respondent / (condition * group))))
-summary(se.aov)
-
-treat<-rbind(preT,postT)
-set.aov <- with(treat, aov(score ~ condition * group + Error(respondent / (condition * group))))
-summary(set.aov)
-
-#ANCOVA
-plot(beforeT[supergroups=="A"],afterT[supergroups=="A"],xlim=c(1,5),ylim=c(1,5))
-points(beforeT[supergroups=="B"],afterT[supergroups=="B"],xlim=c(1,5),ylim=c(1,5),col="red")
-points(beforeT[supergroups=="C"],afterT[supergroups=="C"],xlim=c(1,5),ylim=c(1,5),col="blue")
-
-cor.test(beforeT[supergroups=="A"],afterT[supergroups=="A"])
-cor.test(beforeT[supergroups=="B"],afterT[supergroups=="B"])
-cor.test(beforeT[supergroups=="C"],afterT[supergroups=="C"])
-cor.test(beforeC,afterC)
-
-tot<-data.frame(resp,group=pre$group,prescore=pre$score,postscore=post$score)
-assump1<-aov(postscore~prescore++group+group:prescore,data=tot)
-summary(assump1) #Assumption 1: Equality of slopes-interation is not significant
-
-plot(tot$prescore,tot$postscore,col=tot$group,xlab="prescore",ylab="postscore")
-
-#The linear models (except D) have slopes of 0.3-0.4 with std err of 0.1 and above. 
-summary(lm(tot$postscore[tot$group=='A']~tot$prescore[tot$group=='A']))
-summary(lm(tot$postscore[tot$group=='B']~tot$prescore[tot$group=='B']))
-summary(lm(tot$postscore[tot$group=='C']~tot$prescore[tot$group=='C']))
-summary(lm(tot$postscore[tot$group=='D']~tot$prescore[tot$group=='D']))
-
-#Equality of groups on the covariate is violated. 
-summary(aov(prescore~group, data=tot))
-
-#Homogeneity of variance seems ot be supported
-library(car)
-library(gplots)
-leveneTest(postscore~group,center=mean,data=tot)
-
-#ANOVA BOOTSTRAP
-library(boot)
-
-# function to obtain regression weights
-bs <- function(formula, data, indices) {
-  d <- data[indices,] # allows boot to select sample
-  fit <- aov(formula, data=d)
-  return(coef(fit))
+##CHARACTERISE SUPERGROUPS
+newdata<-mydata[mydata$control=="n",]
+#load supergroups
+respT<-newdata[15:26]
+respT[is.na(respT)]<-0
+respTpre<-newdata[3:14]
+respTpre[is.na(respTpre)]<-0
+anMat<-function(data,memb,letter){
+  sgax<-matrix(0,nrow=12,ncol=7)
+  sgax[,1]<-c(38:49)
+  N<-length(which(memb==letter))
+  colnames(sgax)<-c("Q","1 - Disagree",2:4,"5 - Agree", "NA")
+  sgax[1,2]<-length(which(respT[memb==letter,]$post38==1))/N
+  sgax[1,3]<-length(which(respT[memb==letter,]$post38==2))/N
+  sgax[1,4]<-length(which(respT[memb==letter,]$post38==3))/N
+  sgax[1,5]<-length(which(respT[memb==letter,]$post38==4))/N
+  sgax[1,6]<-length(which(respT[memb==letter,]$post38==5))/N
+  sgax[1,7]<-length(which(respT[memb==letter,]$post38==0))/N
+  
+  sgax[2,2]<-length(which(respT[memb==letter,]$post39==1))/N
+  sgax[2,3]<-length(which(respT[memb==letter,]$post39==2))/N
+  sgax[2,4]<-length(which(respT[memb==letter,]$post39==3))/N
+  sgax[2,5]<-length(which(respT[memb==letter,]$post39==4))/N
+  sgax[2,6]<-length(which(respT[memb==letter,]$post39==5))/N
+  sgax[2,7]<-length(which(respT[memb==letter,]$post39==0))/N
+  
+  sgax[3,2]<-length(which(respT[memb==letter,]$post40==1))/N
+  sgax[3,3]<-length(which(respT[memb==letter,]$post40==2))/N
+  sgax[3,4]<-length(which(respT[memb==letter,]$post40==3))/N
+  sgax[3,5]<-length(which(respT[memb==letter,]$post40==4))/N
+  sgax[3,6]<-length(which(respT[memb==letter,]$post40==5))/N
+  sgax[3,7]<-length(which(respT[memb==letter,]$post40==0))/N
+  
+  sgax[4,2]<-length(which(respT[memb==letter,]$post41==1))/N
+  sgax[4,3]<-length(which(respT[memb==letter,]$post41==2))/N
+  sgax[4,4]<-length(which(respT[memb==letter,]$post41==3))/N
+  sgax[4,5]<-length(which(respT[memb==letter,]$post41==4))/N
+  sgax[4,6]<-length(which(respT[memb==letter,]$post41==5))/N
+  sgax[4,7]<-length(which(respT[memb==letter,]$post41==0))/N
+  
+  sgax[5,2]<-length(which(respT[memb==letter,]$post42==1))/N
+  sgax[5,3]<-length(which(respT[memb==letter,]$post42==2))/N
+  sgax[5,4]<-length(which(respT[memb==letter,]$post42==3))/N
+  sgax[5,5]<-length(which(respT[memb==letter,]$post42==4))/N
+  sgax[5,6]<-length(which(respT[memb==letter,]$post42==5))/N
+  sgax[5,7]<-length(which(respT[memb==letter,]$post42==0))/N
+  
+  sgax[6,2]<-length(which(respT[memb==letter,]$post43==1))/N
+  sgax[6,3]<-length(which(respT[memb==letter,]$post43==2))/N
+  sgax[6,4]<-length(which(respT[memb==letter,]$post43==3))/N
+  sgax[6,5]<-length(which(respT[memb==letter,]$post43==4))/N
+  sgax[6,6]<-length(which(respT[memb==letter,]$post43==5))/N
+  sgax[6,7]<-length(which(respT[memb==letter,]$post43==0))/N
+  
+  sgax[7,2]<-length(which(respT[memb==letter,]$post44==1))/N
+  sgax[7,3]<-length(which(respT[memb==letter,]$post44==2))/N
+  sgax[7,4]<-length(which(respT[memb==letter,]$post44==3))/N
+  sgax[7,5]<-length(which(respT[memb==letter,]$post44==4))/N
+  sgax[7,6]<-length(which(respT[memb==letter,]$post44==5))/N
+  sgax[7,7]<-length(which(respT[memb==letter,]$post44==0))/N
+  
+  sgax[8,2]<-length(which(respT[memb==letter,]$post45==1))/N
+  sgax[8,3]<-length(which(respT[memb==letter,]$post45==2))/N
+  sgax[8,4]<-length(which(respT[memb==letter,]$post45==3))/N
+  sgax[8,5]<-length(which(respT[memb==letter,]$post45==4))/N
+  sgax[8,6]<-length(which(respT[memb==letter,]$post45==5))/N
+  sgax[8,7]<-length(which(respT[memb==letter,]$post45==0))/N
+  
+  sgax[9,2]<-length(which(respT[memb==letter,]$post46==1))/N
+  sgax[9,3]<-length(which(respT[memb==letter,]$post46==2))/N
+  sgax[9,4]<-length(which(respT[memb==letter,]$post46==3))/N
+  sgax[9,5]<-length(which(respT[memb==letter,]$post46==4))/N
+  sgax[9,6]<-length(which(respT[memb==letter,]$post46==5))/N
+  sgax[9,7]<-length(which(respT[memb==letter,]$post46==0))/N
+  
+  sgax[10,2]<-length(which(respT[memb==letter,]$post47==1))/N
+  sgax[10,3]<-length(which(respT[memb==letter,]$post47==2))/N
+  sgax[10,4]<-length(which(respT[memb==letter,]$post47==3))/N
+  sgax[10,5]<-length(which(respT[memb==letter,]$post47==4))/N
+  sgax[10,6]<-length(which(respT[memb==letter,]$post47==5))/N
+  sgax[10,7]<-length(which(respT[memb==letter,]$post47==0))/N
+  
+  sgax[11,2]<-length(which(respT[memb==letter,]$post48==1))/N
+  sgax[11,3]<-length(which(respT[memb==letter,]$post48==2))/N
+  sgax[11,4]<-length(which(respT[memb==letter,]$post48==3))/N
+  sgax[11,5]<-length(which(respT[memb==letter,]$post48==4))/N
+  sgax[11,6]<-length(which(respT[memb==letter,]$post48==5))/N
+  sgax[11,7]<-length(which(respT[memb==letter,]$post48==0))/N
+  
+  sgax[12,2]<-length(which(respT[memb==letter,]$post49==1))/N
+  sgax[12,3]<-length(which(respT[memb==letter,]$post49==2))/N
+  sgax[12,4]<-length(which(respT[memb==letter,]$post49==3))/N
+  sgax[12,5]<-length(which(respT[memb==letter,]$post49==4))/N
+  sgax[12,6]<-length(which(respT[memb==letter,]$post49==5))/N
+  sgax[12,7]<-length(which(respT[memb==letter,]$post49==0))/N
+  return(sgax)
 }
-postSG<-data.frame(score=attributesT$postScore,supergroups)
-# bootstrapping with 1000 replications
-results <- boot(data=postSG, statistic=bs,
-                R=10000, formula=score~supergroups)
 
-# view results
-results
-plot(results, index=1) # A?
-plot(results, index=2) # B?
-plot(results, index=3) # C?
+anMatPre<-function(data,memb,letter){
+  sgax<-matrix(0,nrow=12,ncol=7)
+  sgax[,1]<-c(38:49)
+  N<-length(which(memb==letter))
+  colnames(sgax)<-c("Q","1 - Disagree",2:4,"5 - Agree", "NA")
+  sgax[1,2]<-length(which(data[memb==letter,]$pre38==1))/N
+  sgax[1,3]<-length(which(data[memb==letter,]$pre38==2))/N
+  sgax[1,4]<-length(which(data[memb==letter,]$pre38==3))/N
+  sgax[1,5]<-length(which(data[memb==letter,]$pre38==4))/N
+  sgax[1,6]<-length(which(data[memb==letter,]$pre38==5))/N
+  sgax[1,7]<-length(which(data[memb==letter,]$pre38==0))/N
+  
+  sgax[2,2]<-length(which(data[memb==letter,]$pre39==1))/N
+  sgax[2,3]<-length(which(data[memb==letter,]$pre39==2))/N
+  sgax[2,4]<-length(which(data[memb==letter,]$pre39==3))/N
+  sgax[2,5]<-length(which(data[memb==letter,]$pre39==4))/N
+  sgax[2,6]<-length(which(data[memb==letter,]$pre39==5))/N
+  sgax[2,7]<-length(which(data[memb==letter,]$pre39==0))/N
+  
+  sgax[3,2]<-length(which(data[memb==letter,]$pre40==1))/N
+  sgax[3,3]<-length(which(data[memb==letter,]$pre40==2))/N
+  sgax[3,4]<-length(which(data[memb==letter,]$pre40==3))/N
+  sgax[3,5]<-length(which(data[memb==letter,]$pre40==4))/N
+  sgax[3,6]<-length(which(data[memb==letter,]$pre40==5))/N
+  sgax[3,7]<-length(which(data[memb==letter,]$pre40==0))/N
+  
+  sgax[4,2]<-length(which(data[memb==letter,]$pre41==1))/N
+  sgax[4,3]<-length(which(data[memb==letter,]$pre41==2))/N
+  sgax[4,4]<-length(which(data[memb==letter,]$pre41==3))/N
+  sgax[4,5]<-length(which(data[memb==letter,]$pre41==4))/N
+  sgax[4,6]<-length(which(data[memb==letter,]$pre41==5))/N
+  sgax[4,7]<-length(which(data[memb==letter,]$pre41==0))/N
+  
+  sgax[5,2]<-length(which(data[memb==letter,]$pre42==1))/N
+  sgax[5,3]<-length(which(data[memb==letter,]$pre42==2))/N
+  sgax[5,4]<-length(which(data[memb==letter,]$pre42==3))/N
+  sgax[5,5]<-length(which(data[memb==letter,]$pre42==4))/N
+  sgax[5,6]<-length(which(data[memb==letter,]$pre42==5))/N
+  sgax[5,7]<-length(which(data[memb==letter,]$pre42==0))/N
+  
+  sgax[6,2]<-length(which(data[memb==letter,]$pre43==1))/N
+  sgax[6,3]<-length(which(data[memb==letter,]$pre43==2))/N
+  sgax[6,4]<-length(which(data[memb==letter,]$pre43==3))/N
+  sgax[6,5]<-length(which(data[memb==letter,]$pre43==4))/N
+  sgax[6,6]<-length(which(data[memb==letter,]$pre43==5))/N
+  sgax[6,7]<-length(which(data[memb==letter,]$pre43==0))/N
+  
+  sgax[7,2]<-length(which(data[memb==letter,]$pre44==1))/N
+  sgax[7,3]<-length(which(data[memb==letter,]$pre44==2))/N
+  sgax[7,4]<-length(which(data[memb==letter,]$pre44==3))/N
+  sgax[7,5]<-length(which(data[memb==letter,]$pre44==4))/N
+  sgax[7,6]<-length(which(data[memb==letter,]$pre44==5))/N
+  sgax[7,7]<-length(which(data[memb==letter,]$pre44==0))/N
+  
+  sgax[8,2]<-length(which(data[memb==letter,]$pre45==1))/N
+  sgax[8,3]<-length(which(data[memb==letter,]$pre45==2))/N
+  sgax[8,4]<-length(which(data[memb==letter,]$pre45==3))/N
+  sgax[8,5]<-length(which(data[memb==letter,]$pre45==4))/N
+  sgax[8,6]<-length(which(data[memb==letter,]$pre45==5))/N
+  sgax[8,7]<-length(which(data[memb==letter,]$pre45==0))/N
+  
+  sgax[9,2]<-length(which(data[memb==letter,]$pre46==1))/N
+  sgax[9,3]<-length(which(data[memb==letter,]$pre46==2))/N
+  sgax[9,4]<-length(which(data[memb==letter,]$pre46==3))/N
+  sgax[9,5]<-length(which(data[memb==letter,]$pre46==4))/N
+  sgax[9,6]<-length(which(data[memb==letter,]$pre46==5))/N
+  sgax[9,7]<-length(which(data[memb==letter,]$pre46==0))/N
+  
+  sgax[10,2]<-length(which(data[memb==letter,]$pre47==1))/N
+  sgax[10,3]<-length(which(data[memb==letter,]$pre47==2))/N
+  sgax[10,4]<-length(which(data[memb==letter,]$pre47==3))/N
+  sgax[10,5]<-length(which(data[memb==letter,]$pre47==4))/N
+  sgax[10,6]<-length(which(data[memb==letter,]$pre47==5))/N
+  sgax[10,7]<-length(which(data[memb==letter,]$pre47==0))/N
+  
+  sgax[11,2]<-length(which(data[memb==letter,]$pre48==1))/N
+  sgax[11,3]<-length(which(data[memb==letter,]$pre48==2))/N
+  sgax[11,4]<-length(which(data[memb==letter,]$pre48==3))/N
+  sgax[11,5]<-length(which(data[memb==letter,]$pre48==4))/N
+  sgax[11,6]<-length(which(data[memb==letter,]$pre48==5))/N
+  sgax[11,7]<-length(which(data[memb==letter,]$pre48==0))/N
+  
+  sgax[12,2]<-length(which(data[memb==letter,]$pre49==1))/N
+  sgax[12,3]<-length(which(data[memb==letter,]$pre49==2))/N
+  sgax[12,4]<-length(which(data[memb==letter,]$pre49==3))/N
+  sgax[12,5]<-length(which(data[memb==letter,]$pre49==4))/N
+  sgax[12,6]<-length(which(data[memb==letter,]$pre49==5))/N
+  sgax[12,7]<-length(which(data[memb==letter,]$pre49==0))/N
+  return(sgax)
+}
+
+##############SUPERGROUP PRE POST ANSWERS AND DIFFERENCES#######################################
+sgAPre<-anMatPre(respTpre,supergroups,"A")
+sgAPost<-anMat(respT,supergroups,"A")
+sgADiff<-sgAPost-sgAPre
+sgBPre<-anMatPre(respTpre,supergroups,"B")
+sgBPost<-anMat(respT,supergroups,"B")
+sgBDiff<-sgBPost-sgBPre
+sgCPre<-anMatPre(respTpre,supergroups,"C")
+sgCPost<-anMat(respT,supergroups,"C")
+sgCDiff<-sgCPost-sgCPre
+
+
+
+
+par(mfrow=c(3,2))
+barplot(rbind(sgAPost[1,2:7],sgBPost[1,2:7],sgCPost[1,2:7]),beside=T,main="Q38: Find better ways to teach using FA",xlab="Teacher response",ylab="Frequency",legend=c("A","B","C"))
+barplot(rbind(sgAPost[2,2:7],sgBPost[2,2:7],sgCPost[2,2:7]),beside=T,main="Q39R: Not difficult to integrate FA ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[3,2:7],sgBPost[3,2:7],sgCPost[3,2:7]),beside=T,main="Q40: Know necessary steps",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[4,2:7],sgBPost[4,2:7],sgCPost[4,2:7]),beside=T,main="Q41R: Effective in monitoring student work",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[5,2:7],sgBPost[5,2:7],sgCPost[5,2:7]),beside=T,main="Q42R: Teaching will be effective ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[6,2:7],sgBPost[6,2:7],sgCPost[6,2:7]),beside=T,main="Q43: Student background can be overcome",xlab="Teacher response",ylab="Frequency")
+par(mfrow=c(3,2))
+barplot(rbind(sgAPost[7,2:7],sgBPost[7,2:7],sgCPost[7,2:7]),beside=T,main="Q44: Low-achieving student progress due to FA",xlab="Teacher response",ylab="Frequency",legend=c("A","B","C"))
+barplot(rbind(sgAPost[8,2:7],sgBPost[8,2:7],sgCPost[8,2:7]),beside=T,main="Q45: Understand FA enough to be effective ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[9,2:7],sgBPost[9,2:7],sgCPost[9,2:7]),beside=T,main="Q46R: Increased effort leads to change ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[10,2:7],sgBPost[10,2:7],sgCPost[10,2:7]),beside=T,main="Q47R: Not difficult to explain content ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[11,2:7],sgBPost[11,2:7],sgCPost[11,2:7]),beside=T,main="Q48: Able to answer student questions",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[12,2:7],sgBPost[12,2:7],sgCPost[12,2:7]),beside=T,main="Q49R: Do not wonder necessary skills",xlab="Teacher response",ylab="Frequency")
+
+#PRE
+par(mfrow=c(3,2))
+barplot(rbind(sgAPre[1,2:7],sgBPre[1,2:7],sgCPre[1,2:7]),beside=T,main="Q38: Find better ways to teach using FA",xlab="Teacher response",ylab="Frequency",legend=c("A","B","C"))
+barplot(rbind(sgAPre[2,2:7],sgBPre[2,2:7],sgCPre[2,2:7]),beside=T,main="Q39R: Not difficult to integrate FA ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPre[3,2:7],sgBPre[3,2:7],sgCPre[3,2:7]),beside=T,main="Q40: Know necessary steps",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPre[4,2:7],sgBPre[4,2:7],sgCPre[4,2:7]),beside=T,main="Q41R: Effective in monitoring student work",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPre[5,2:7],sgBPre[5,2:7],sgCPre[5,2:7]),beside=T,main="Q42R: Teaching will be effective ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPre[6,2:7],sgBPre[6,2:7],sgCPre[6,2:7]),beside=T,main="Q43: Student background can be overcome",xlab="Teacher response",ylab="Frequency")
+par(mfrow=c(3,2))
+barplot(rbind(sgAPre[7,2:7],sgBPre[7,2:7],sgCPre[7,2:7]),beside=T,main="Q44: Low-achieving student progress due to FA",xlab="Teacher response",ylab="Frequency",legend=c("A","B","C"))
+barplot(rbind(sgAPre[8,2:7],sgBPre[8,2:7],sgCPre[8,2:7]),beside=T,main="Q45: Understand FA enough to be effective ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPre[9,2:7],sgBPre[9,2:7],sgCPre[9,2:7]),beside=T,main="Q46R: Increased effort leads to change ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPre[10,2:7],sgBPre[10,2:7],sgCPre[10,2:7]),beside=T,main="Q47R: Not difficult to explain content ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPre[11,2:7],sgBPre[11,2:7],sgCPre[11,2:7]),beside=T,main="Q48: Able to answer student questions",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPre[12,2:7],sgBPre[12,2:7],sgCPre[12,2:7]),beside=T,main="Q49R: Do not wonder necessary skills",xlab="Teacher response",ylab="Frequency")
+
+#Differences between post and pre. 
+par(mfrow=c(3,2))
+barplot(rbind(sgADiff[1,2:7],sgBDiff[1,2:7],sgCDiff[1,2:7]),beside=T,main="Q38: Find better ways to teach using FA",xlab="Teacher response",ylab="Frequency",legend=c("A","B","C"))
+barplot(rbind(sgADiff[2,2:7],sgBDiff[2,2:7],sgCDiff[2,2:7]),beside=T,main="Q39R: Not difficult to integrate FA ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[3,2:7],sgBDiff[3,2:7],sgCDiff[3,2:7]),beside=T,main="Q40: Know necessary steps",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[4,2:7],sgBDiff[4,2:7],sgCDiff[4,2:7]),beside=T,main="Q41R: Effective in monitoring student work",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[5,2:7],sgBDiff[5,2:7],sgCDiff[5,2:7]),beside=T,main="Q42R: Teaching will be effective ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[6,2:7],sgBDiff[6,2:7],sgCDiff[6,2:7]),beside=T,main="Q43: Student background can be overcome",xlab="Teacher response",ylab="Frequency")
+par(mfrow=c(3,2))
+barplot(rbind(sgADiff[7,2:7],sgBDiff[7,2:7],sgCDiff[7,2:7]),beside=T,main="Q44: Low-achieving student progress due to FA",xlab="Teacher response",ylab="Frequency",legend=c("A","B","C"))
+barplot(rbind(sgADiff[8,2:7],sgBDiff[8,2:7],sgCDiff[8,2:7]),beside=T,main="Q45: Understand FA enough to be effective ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[9,2:7],sgBDiff[9,2:7],sgCDiff[9,2:7]),beside=T,main="Q46R: Increased effort leads to change ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[10,2:7],sgBDiff[10,2:7],sgCDiff[10,2:7]),beside=T,main="Q47R: Not difficult to explain content ",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[11,2:7],sgBDiff[11,2:7],sgCDiff[11,2:7]),beside=T,main="Q48: Able to answer student questions",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[12,2:7],sgBDiff[12,2:7],sgCDiff[12,2:7]),beside=T,main="Q49R: Do not wonder necessary skills",xlab="Teacher response",ylab="Frequency")
+
+###############
+
+#Analysis
 
-# get 95% confidence intervals
-boot.ci(results, type="bca", index=1) # intercept
-boot.ci(results, type="bca", index=2) # wt
-boot.ci(results, type="bca", index=3) # disp 
 
-aov.x<-aov(afterT~supergroups)
-aov.y<-aov(beforeT~supergroups)
-summary(aov(attributesT$postScore~supergroups))
-boxplot2(afterT~supergroups)
-TukeyHSD(aov(afterT~supergroups))
 
-#ANOVAS
-
-
-newdata<-mydata[mydata$control=="n",]
-summary(aov(newdata$pre38~supergroups))
-TukeyHSD(aov(newdata$pre38~supergroups))
-summary(aov(newdata$post38~supergroups))
-TukeyHSD(aov(newdata$post38~supergroups))
-summary(aov(newdata$pre39~supergroups))
-TukeyHSD(aov(newdata$pre39~supergroups))
-summary(aov(newdata$post39~supergroups))
-TukeyHSD(aov(newdata$post39~supergroups))
-summary(aov(newdata$pre40~supergroups))
-TukeyHSD(aov(newdata$pre40~supergroups))
-summary(aov(newdata$post40~supergroups))
-TukeyHSD(aov(newdata$post40~supergroups))
-summary(aov(newdata$pre41~supergroups))
-TukeyHSD(aov(newdata$pre41~supergroups))
-summary(aov(newdata$post41~supergroups))
-TukeyHSD(aov(newdata$post41~supergroups))
-summary(aov(newdata$pre42~supergroups))
-TukeyHSD(aov(newdata$pre42~supergroups))
-summary(aov(newdata$post42~supergroups))
-TukeyHSD(aov(newdata$post42~supergroups))
-summary(aov(newdata$pre43~supergroups))
-TukeyHSD(aov(newdata$pre43~supergroups))
-summary(aov(newdata$post43~supergroups))
-TukeyHSD(aov(newdata$post43~supergroups))
-summary(aov(newdata$pre44~supergroups))
-TukeyHSD(aov(newdata$pre44~supergroups))
-summary(aov(newdata$post44~supergroups))
-TukeyHSD(aov(newdata$post44~supergroups))
-summary(aov(newdata$pre45~supergroups))
-TukeyHSD(aov(newdata$pre45~supergroups))
-summary(aov(newdata$post45~supergroups))
-TukeyHSD(aov(newdata$post45~supergroups))
-
-summary(aov(newdata$pre46~supergroups))
-TukeyHSD(aov(newdata$pre46~supergroups))
-summary(aov(newdata$post46~supergroups))
-TukeyHSD(aov(newdata$post46~supergroups))
-
-summary(aov(newdata$pre47~supergroups))
-TukeyHSD(aov(newdata$pre47~supergroups))
-summary(aov(newdata$post47~supergroups))
-TukeyHSD(aov(newdata$post47~supergroups))
-
-summary(aov(newdata$pre48~supergroups))
-TukeyHSD(aov(newdata$pre48~supergroups))
-summary(aov(newdata$post48~supergroups))
-TukeyHSD(aov(newdata$post48~supergroups))
-
-summary(aov(newdata$pre49~supergroups))
-TukeyHSD(aov(newdata$pre49~supergroups))
-summary(aov(newdata$post49~supergroups))
-TukeyHSD(aov(newdata$post49~supergroups))
-
-#####
-plot(density(afterC,na.rm = T))
-plot(density(attributesT$preScore[supergroups=="A"]))
-plot(density(attributesT$preScore[supergroups=="B"]))
-plot(density(attributesT$preScore[supergroups=="C"]))
-plot(density(attributesT$preScore,na.rm=T))
-
-preMeans<-vector()
-preUnc<-vector()
-preMeans[1]<-mean(beforeC,na.rm=T)
-preUnc[1]<-1.96*sd(beforeC,na.rm=T)/sqrt(length(afterC))
-preMeans[2]<-mean(attributesT$preScore[supergroups=="A"],na.rm=T)
-preUnc[2]<-1.96*sd(attributesT$preScore[supergroups=="A"],na.rm=T)/sqrt(length(supergroups[supergroups=="A"]))
-preMeans[3]<-mean(attributesT$preScore[supergroups=="B"],na.rm=T)
-preUnc[3]<-1.96*sd(attributesT$preScore[supergroups=="B"],na.rm=T)/sqrt(length(supergroups[supergroups=="B"]))
-preMeans[4]<-mean(attributesT$preScore[supergroups=="C"],na.rm=T)
-preUnc[4]<-1.96*sd(attributesT$preScore[supergroups=="C"],na.rm=T)/sqrt(length(supergroups[supergroups=="C"]))
-preMeans[5]<-mean(attributesT$preScore,na.rm=T)
-preUnc[5]<-1.96*sd(attributesT$preScore,na.rm=T)/sqrt(length(supergroups))
-
-
-postMeans<-vector()
-postUnc<-vector()
-postMeans[1]<-mean(afterC,na.rm=T)
-postUnc[1]<-1.96*sd(afterC,na.rm=T)/sqrt(length(afterC))
-postMeans[2]<-mean(attributesT$postScore[supergroups=="A"],na.rm=T)
-postUnc[2]<-1.96*sd(attributesT$postScore[supergroups=="A"],na.rm=T)/sqrt(length(supergroups[supergroups=="A"]))
-postMeans[3]<-mean(attributesT$postScore[supergroups=="B"],na.rm=T)
-postUnc[3]<-1.96*sd(attributesT$postScore[supergroups=="B"],na.rm=T)/sqrt(length(supergroups[supergroups=="B"]))
-postMeans[4]<-mean(attributesT$postScore[supergroups=="C"],na.rm=T)
-postUnc[4]<-1.96*sd(attributesT$postScore[supergroups=="C"],na.rm=T)/sqrt(length(supergroups[supergroups=="C"]))
-postMeans[5]<-mean(attributesT$postScore,na.rm=T)
-postUnc[5]<-1.96*sd(attributesT$postScore,na.rm=T)/sqrt(length(supergroups))
-
-means<-data.frame(preMeans,postMeans)
-uncs<-data.frame(preUnc,postUnc)
-x<-c(1.2,1.8)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5),pch=1,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-segments(x[1], means[1,1],x[2],means[1,2])
-lines(x,means[5,], type="o", pch=2, lty=5)
-arrows(x, as.numeric(means[5,])-as.numeric(uncs[5,]), x, as.numeric(means[5,])+as.numeric(uncs[5,]), length=0.05, angle=90, code=3)
-axis(1, at=c(1.2,1.8), lab=c("Pre","Post"),cex=1.5)
-axis(2, las=1, at=1:5,cex=1)
-legend(1, 5, c("Control","All Participants"), pch=1:2, lty=c(1,5))
-box()
-
-plot(x,means[2,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[2,])-as.numeric(uncs[2,]), x, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-segments(x[1], means[1,1],x[2],means[1,2])
-segments(x[1], means[1,1]-uncs[1,1],x[2],means[1,2]-uncs[1,2])
-segments(x[1], means[1,1]+uncs[1,1],x[2],means[1,2]+uncs[1,2])
-
-lines(x,means[3,], type="o", pch=6, lty=3)
-arrows(x, as.numeric(means[3,])-as.numeric(uncs[3,]), x, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-lines(x,means[4,], type="o", pch=7, lty=4)
-arrows(x, as.numeric(means[4,])-as.numeric(uncs[4,]), x, as.numeric(means[4,])+as.numeric(uncs[4,]), length=0.05, angle=90, code=3)
-
-axis(1, at=c(1.2,1.8), lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-legend(1, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-
-box()
-
-newdata<-mydata[mydata$control=="n",]
-Q38prem<-vector()
-Q38preu<-vector()
-Q38prem[1]<-mean(newdata$pre38[supergroups=="A"],na.rm=T)
-Q38prem[2]<-mean(newdata$pre38[supergroups=="B"],na.rm=T)
-Q38prem[3]<-mean(newdata$pre38[supergroups=="C"],na.rm=T)
-
-Q38preu[1]<-1.96*sd(newdata$pre38[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q38preu[2]<-1.96*sd(newdata$pre38[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q38preu[3]<-1.96*sd(newdata$pre38[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q38postm<-vector()
-Q38postu<-vector()
-Q38postm[1]<-mean(newdata$post38[supergroups=="A"],na.rm=T)
-Q38postm[2]<-mean(newdata$post38[supergroups=="B"],na.rm=T)
-Q38postm[3]<-mean(newdata$post38[supergroups=="C"],na.rm=T)
-
-Q38postu[1]<-1.96*sd(newdata$post38[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q38postu[2]<-1.96*sd(newdata$post38[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q38postu[3]<-1.96*sd(newdata$post38[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q38prem,Q38postm)
-uncs<-data.frame(Q38preu,Q38postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q38")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-###Q39###
-Q39prem<-vector()
-Q39preu<-vector()
-Q39prem[1]<-mean(newdata$pre39[supergroups=="A"],na.rm=T)
-Q39prem[2]<-mean(newdata$pre39[supergroups=="B"],na.rm=T)
-Q39prem[3]<-mean(newdata$pre39[supergroups=="C"],na.rm=T)
-
-Q39preu[1]<-1.96*sd(newdata$pre39[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q39preu[2]<-1.96*sd(newdata$pre39[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q39preu[3]<-1.96*sd(newdata$pre39[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q39postm<-vector()
-Q39postu<-vector()
-Q39postm[1]<-mean(newdata$post39[supergroups=="A"],na.rm=T)
-Q39postm[2]<-mean(newdata$post39[supergroups=="B"],na.rm=T)
-Q39postm[3]<-mean(newdata$post39[supergroups=="C"],na.rm=T)
-
-Q39postu[1]<-1.96*sd(newdata$post39[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q39postu[2]<-1.96*sd(newdata$post39[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q39postu[3]<-1.96*sd(newdata$post39[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q39prem,Q39postm)
-uncs<-data.frame(Q39preu,Q39postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q39")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-###Q40###
-Q40prem<-vector()
-Q40preu<-vector()
-Q40prem[1]<-mean(newdata$pre40[supergroups=="A"],na.rm=T)
-Q40prem[2]<-mean(newdata$pre40[supergroups=="B"],na.rm=T)
-Q40prem[3]<-mean(newdata$pre40[supergroups=="C"],na.rm=T)
-
-Q40preu[1]<-1.96*sd(newdata$pre40[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q40preu[2]<-1.96*sd(newdata$pre40[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q40preu[3]<-1.96*sd(newdata$pre40[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q40postm<-vector()
-Q40postu<-vector()
-Q40postm[1]<-mean(newdata$post40[supergroups=="A"],na.rm=T)
-Q40postm[2]<-mean(newdata$post40[supergroups=="B"],na.rm=T)
-Q40postm[3]<-mean(newdata$post40[supergroups=="C"],na.rm=T)
-
-Q40postu[1]<-1.96*sd(newdata$post40[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q40postu[2]<-1.96*sd(newdata$post40[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q40postu[3]<-1.96*sd(newdata$post40[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q40prem,Q40postm)
-uncs<-data.frame(Q40preu,Q40postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q40")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-###Q41###
-Q41prem<-vector()
-Q41preu<-vector()
-Q41prem[1]<-mean(newdata$pre41[supergroups=="A"],na.rm=T)
-Q41prem[2]<-mean(newdata$pre41[supergroups=="B"],na.rm=T)
-Q41prem[3]<-mean(newdata$pre41[supergroups=="C"],na.rm=T)
-
-Q41preu[1]<-1.96*sd(newdata$pre41[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q41preu[2]<-1.96*sd(newdata$pre41[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q41preu[3]<-1.96*sd(newdata$pre41[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q41postm<-vector()
-Q41postu<-vector()
-Q41postm[1]<-mean(newdata$post41[supergroups=="A"],na.rm=T)
-Q41postm[2]<-mean(newdata$post41[supergroups=="B"],na.rm=T)
-Q41postm[3]<-mean(newdata$post41[supergroups=="C"],na.rm=T)
-
-Q41postu[1]<-1.96*sd(newdata$post41[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q41postu[2]<-1.96*sd(newdata$post41[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q41postu[3]<-1.96*sd(newdata$post41[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q41prem,Q41postm)
-uncs<-data.frame(Q41preu,Q41postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q41")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-###Q42###
-Q42prem<-vector()
-Q42preu<-vector()
-Q42prem[1]<-mean(newdata$pre42[supergroups=="A"],na.rm=T)
-Q42prem[2]<-mean(newdata$pre42[supergroups=="B"],na.rm=T)
-Q42prem[3]<-mean(newdata$pre42[supergroups=="C"],na.rm=T)
-
-Q42preu[1]<-1.96*sd(newdata$pre42[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q42preu[2]<-1.96*sd(newdata$pre42[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q42preu[3]<-1.96*sd(newdata$pre42[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q42postm<-vector()
-Q42postu<-vector()
-Q42postm[1]<-mean(newdata$post42[supergroups=="A"],na.rm=T)
-Q42postm[2]<-mean(newdata$post42[supergroups=="B"],na.rm=T)
-Q42postm[3]<-mean(newdata$post42[supergroups=="C"],na.rm=T)
-
-Q42postu[1]<-1.96*sd(newdata$post42[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q42postu[2]<-1.96*sd(newdata$post42[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q42postu[3]<-1.96*sd(newdata$post42[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q42prem,Q42postm)
-uncs<-data.frame(Q42preu,Q42postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q42")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-###Q43###
-Q43prem<-vector()
-Q43preu<-vector()
-Q43prem[1]<-mean(newdata$pre43[supergroups=="A"],na.rm=T)
-Q43prem[2]<-mean(newdata$pre43[supergroups=="B"],na.rm=T)
-Q43prem[3]<-mean(newdata$pre43[supergroups=="C"],na.rm=T)
-
-Q43preu[1]<-1.96*sd(newdata$pre43[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q43preu[2]<-1.96*sd(newdata$pre43[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q43preu[3]<-1.96*sd(newdata$pre43[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q43postm<-vector()
-Q43postu<-vector()
-Q43postm[1]<-mean(newdata$post43[supergroups=="A"],na.rm=T)
-Q43postm[2]<-mean(newdata$post43[supergroups=="B"],na.rm=T)
-Q43postm[3]<-mean(newdata$post43[supergroups=="C"],na.rm=T)
-
-Q43postu[1]<-1.96*sd(newdata$post43[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q43postu[2]<-1.96*sd(newdata$post43[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q43postu[3]<-1.96*sd(newdata$post43[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q43prem,Q43postm)
-uncs<-data.frame(Q43preu,Q43postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q43")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-###Q44###
-Q44prem<-vector()
-Q44preu<-vector()
-Q44prem[1]<-mean(newdata$pre44[supergroups=="A"],na.rm=T)
-Q44prem[2]<-mean(newdata$pre44[supergroups=="B"],na.rm=T)
-Q44prem[3]<-mean(newdata$pre44[supergroups=="C"],na.rm=T)
-
-Q44preu[1]<-1.96*sd(newdata$pre44[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q44preu[2]<-1.96*sd(newdata$pre44[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q44preu[3]<-1.96*sd(newdata$pre44[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q44postm<-vector()
-Q44postu<-vector()
-Q44postm[1]<-mean(newdata$post44[supergroups=="A"],na.rm=T)
-Q44postm[2]<-mean(newdata$post44[supergroups=="B"],na.rm=T)
-Q44postm[3]<-mean(newdata$post44[supergroups=="C"],na.rm=T)
-
-Q44postu[1]<-1.96*sd(newdata$post44[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q44postu[2]<-1.96*sd(newdata$post44[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q44postu[3]<-1.96*sd(newdata$post44[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q44prem,Q44postm)
-uncs<-data.frame(Q44preu,Q44postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q44")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-###Q45###
-Q45prem<-vector()
-Q45preu<-vector()
-Q45prem[1]<-mean(newdata$pre45[supergroups=="A"],na.rm=T)
-Q45prem[2]<-mean(newdata$pre45[supergroups=="B"],na.rm=T)
-Q45prem[3]<-mean(newdata$pre45[supergroups=="C"],na.rm=T)
-
-Q45preu[1]<-1.96*sd(newdata$pre45[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q45preu[2]<-1.96*sd(newdata$pre45[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q45preu[3]<-1.96*sd(newdata$pre45[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q45postm<-vector()
-Q45postu<-vector()
-Q45postm[1]<-mean(newdata$post45[supergroups=="A"],na.rm=T)
-Q45postm[2]<-mean(newdata$post45[supergroups=="B"],na.rm=T)
-Q45postm[3]<-mean(newdata$post45[supergroups=="C"],na.rm=T)
-
-Q45postu[1]<-1.96*sd(newdata$post45[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q45postu[2]<-1.96*sd(newdata$post45[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q45postu[3]<-1.96*sd(newdata$post45[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q45prem,Q45postm)
-uncs<-data.frame(Q45preu,Q45postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q45")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-
-###Q46###
-Q46prem<-vector()
-Q46preu<-vector()
-Q46prem[1]<-mean(newdata$pre46[supergroups=="A"],na.rm=T)
-Q46prem[2]<-mean(newdata$pre46[supergroups=="B"],na.rm=T)
-Q46prem[3]<-mean(newdata$pre46[supergroups=="C"],na.rm=T)
-
-Q46preu[1]<-1.96*sd(newdata$pre46[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q46preu[2]<-1.96*sd(newdata$pre46[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q46preu[3]<-1.96*sd(newdata$pre46[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q46postm<-vector()
-Q46postu<-vector()
-Q46postm[1]<-mean(newdata$post46[supergroups=="A"],na.rm=T)
-Q46postm[2]<-mean(newdata$post46[supergroups=="B"],na.rm=T)
-Q46postm[3]<-mean(newdata$post46[supergroups=="C"],na.rm=T)
-
-Q46postu[1]<-1.96*sd(newdata$post46[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q46postu[2]<-1.96*sd(newdata$post46[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q46postu[3]<-1.96*sd(newdata$post46[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q46prem,Q46postm)
-uncs<-data.frame(Q46preu,Q46postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q46")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-###Q47###
-Q47prem<-vector()
-Q47preu<-vector()
-Q47prem[1]<-mean(newdata$pre47[supergroups=="A"],na.rm=T)
-Q47prem[2]<-mean(newdata$pre47[supergroups=="B"],na.rm=T)
-Q47prem[3]<-mean(newdata$pre47[supergroups=="C"],na.rm=T)
-
-Q47preu[1]<-1.96*sd(newdata$pre47[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q47preu[2]<-1.96*sd(newdata$pre47[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q47preu[3]<-1.96*sd(newdata$pre47[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q47postm<-vector()
-Q47postu<-vector()
-Q47postm[1]<-mean(newdata$post47[supergroups=="A"],na.rm=T)
-Q47postm[2]<-mean(newdata$post47[supergroups=="B"],na.rm=T)
-Q47postm[3]<-mean(newdata$post47[supergroups=="C"],na.rm=T)
-
-Q47postu[1]<-1.96*sd(newdata$post47[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q47postu[2]<-1.96*sd(newdata$post47[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q47postu[3]<-1.96*sd(newdata$post47[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q47prem,Q47postm)
-uncs<-data.frame(Q47preu,Q47postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q47")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-
-
-###Q48###
-Q48prem<-vector()
-Q48preu<-vector()
-Q48prem[1]<-mean(newdata$pre48[supergroups=="A"],na.rm=T)
-Q48prem[2]<-mean(newdata$pre48[supergroups=="B"],na.rm=T)
-Q48prem[3]<-mean(newdata$pre48[supergroups=="C"],na.rm=T)
-
-Q48preu[1]<-1.96*sd(newdata$pre48[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q48preu[2]<-1.96*sd(newdata$pre48[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q48preu[3]<-1.96*sd(newdata$pre48[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q48postm<-vector()
-Q48postu<-vector()
-Q48postm[1]<-mean(newdata$post48[supergroups=="A"],na.rm=T)
-Q48postm[2]<-mean(newdata$post48[supergroups=="B"],na.rm=T)
-Q48postm[3]<-mean(newdata$post48[supergroups=="C"],na.rm=T)
-
-Q48postu[1]<-1.96*sd(newdata$post48[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q48postu[2]<-1.96*sd(newdata$post48[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q48postu[3]<-1.96*sd(newdata$post48[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q48prem,Q48postm)
-uncs<-data.frame(Q48preu,Q48postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q48")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
-
-###Q49###
-Q49prem<-vector()
-Q49preu<-vector()
-Q49prem[1]<-mean(newdata$pre49[supergroups=="A"],na.rm=T)
-Q49prem[2]<-mean(newdata$pre49[supergroups=="B"],na.rm=T)
-Q49prem[3]<-mean(newdata$pre49[supergroups=="C"],na.rm=T)
-
-Q49preu[1]<-1.96*sd(newdata$pre49[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q49preu[2]<-1.96*sd(newdata$pre49[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q49preu[3]<-1.96*sd(newdata$pre49[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-Q49postm<-vector()
-Q49postu<-vector()
-Q49postm[1]<-mean(newdata$post49[supergroups=="A"],na.rm=T)
-Q49postm[2]<-mean(newdata$post49[supergroups=="B"],na.rm=T)
-Q49postm[3]<-mean(newdata$post49[supergroups=="C"],na.rm=T)
-
-Q49postu[1]<-1.96*sd(newdata$post49[supergroups=="A"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="A"])))
-Q49postu[2]<-1.96*sd(newdata$post49[supergroups=="B"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="B"])))
-Q49postu[3]<-1.96*sd(newdata$post49[supergroups=="C"],na.rm=T)/sqrt(sqrt(length(supergroups[supergroups=="C"])))
-
-means<-data.frame(Q49prem,Q49postm)
-uncs<-data.frame(Q49preu,Q49postu)
-x<-c(1.05,1.65)
-plot(x,means[1,],xlim=c(1,2),ylim=c(1,5), type="o", pch=5, lty=2,axes=F,ann=F)
-arrows(x, as.numeric(means[1,])-as.numeric(uncs[1,]), x, as.numeric(means[1,])+as.numeric(uncs[1,]), length=0.05, angle=90, code=3)
-
-lines(x+.03,means[2,], type="o", pch=6, lty=3)
-arrows(x+.03, as.numeric(means[2,])-as.numeric(uncs[2,]), x+.03, as.numeric(means[2,])+as.numeric(uncs[2,]), length=0.05, angle=90, code=3)
-lines(x-.03,means[3,], type="o", pch=7, lty=4)
-arrows(x-.03, as.numeric(means[3,])-as.numeric(uncs[3,]), x-.03, as.numeric(means[3,])+as.numeric(uncs[3,]), length=0.05, angle=90, code=3)
-
-axis(1, at=x, lab=c("Pre","Post"))
-axis(2, las=1, at=1:5)
-title(main="Q49")
-legend(1.75, 5, c("Super group A","Super group B", "Super group C"), pch=5:7, lty=2:4)
 
 
 
