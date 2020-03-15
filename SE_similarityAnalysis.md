@@ -74,6 +74,17 @@ source("R_scripts/segregation.r")
 
 ## Describe optimal super group solution
 
+    ##       N_teachers N_internal Mean_internal SD_internal N_external Mean_external
+    ## A             22         28     0.4609278  0.07210353          4     0.4157937
+    ## B             23         38     0.5646201  0.08324876          5     0.4724391
+    ## C             19         25     0.4733391  0.08431360          6     0.4620622
+    ## Total         64         91     0.5076376  0.09317196         15     0.4531829
+    ##       SD_external
+    ## A      0.02169836
+    ## B      0.07372601
+    ## C      0.04990817
+    ## Total  0.05575940
+
     ## 
     ##  Wilcoxon rank sum test with continuity correction
     ## 
@@ -377,28 +388,28 @@ source("R_scripts/segregation.r")
 
 ## Segregation analysis
 
-    ## [1] 9.923631
+    ## [1] 10.38148
 
-    ## [1] 0.2229458
+    ## [1] 0.2851449
 
-    ## [1] -0.05487449
+    ## [1] -0.07454602
 
-    ## [1] -0.5544493
+    ## [1] -0.614124
 
-    ## [1] -0.5367687
+    ## [1] -0.5044833
 
-    ## [1] 1.427654
+    ## [1] 1.125445
 
-    ## [1] 2.800479
+    ## [1] 2.642014
 
-    ## [1] 0.009618495
+    ## [1] 0.03949462
 
-    ## [1] 1.153237
+    ## [1] 1.154585
 
-    ## [1] 3.047224
+    ## [1] 2.900518
 
-    ## [1] 15.80032
+    ## [1] 15.00924
 
 \#\#Entropy analysis
-![](SE_similarityAnalysis_files/figure-gfm/entropy-analysis-1.png)<!-- -->![](SE_similarityAnalysis_files/figure-gfm/entropy-analysis-2.png)<!-- -->
+![](SE_similarityAnalysis_files/figure-gfm/entropy-analysis-1.png)<!-- -->
 \#\#Single question analyses

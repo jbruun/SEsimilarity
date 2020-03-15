@@ -605,7 +605,7 @@ summary(ans48)
 ans49 <- kwAllPairsNemenyiTest(newdata$post49 ~ supergroups, dist="Chisquare")
 summary(ans49)
 ###############
-## Entropy analysis ### NOT DONE
+## Entropy analysis 
 Sa<-vector()
 for(i in 1:12){
   Sa[i]<--sum(sgAPost[i,2:7]*log2(sgAPost[i,2:7]),na.rm=T)
@@ -626,15 +626,44 @@ for(i in 1:12){
 
 Smax<--log2(1/6)
 
+
 plot(Sa/Smax,ylim=c(0,1), pch="A", ylab="S/Smax", xlab="Question", xaxt="n", main="Entropy of distributions")
 axis(1, at=c(1:12), labels=c("Q38", "Q39", "Q40", "Q41", "Q42", "Q43", "Q44", "Q45", "Q46", "Q47", "Q48", "Q49"))
 points(Sb/Smax,pch="B",col="blue")
 points(Sc/Smax,pch="C",col="red")
 
 
+plot(Sa/Smax,ylim=c(0,1), main="Test", ylab="S/Smax", xlab="Question")
+points(Sb/Smax,pch="B",col="blue")
+points(Sc/Smax,pch="C",col="red")
+
+plot(Sa,ylim=c(0,1),pch="A", ylab="S/Smax", xlab="Question")
+points(Sb/Smax,pch="B",col="blue")
+points(Sc/Smax,pch="C",col="red")
+
+plot(Sa/Smax,ylim=c(0,1),pch="A")
 
 
+#SHIFT ANALYSIS
+shifts<-c(as.numeric(sgADiff[,2:7]),as.numeric(sgBDiff[,2:7]),as.numeric(sgCDiff[,2:7]))
+hist(shifts)
+qqnorm(shifts)
+mean(shifts)
+sd(shifts)
 
+par(mfrow=c(3,2))
+barplot(rbind(sgAPre[3,2:7],sgBPre[3,2:7],sgCPre[3,2:7]),beside=T,main="Q40: Pre Intervention",xlab="Teacher response",ylab="Frequency",legend=c("A","B","C"))
+barplot(rbind(sgAPre[12,2:7],sgBPre[12,2:7],sgCPre[12,2:7]),beside=T,main="Q49R: Pre Intervention",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[3,2:7],sgBPost[3,2:7],sgCPost[3,2:7]),beside=T,main="Q40: Post Intervention",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgAPost[12,2:7],sgBPost[12,2:7],sgCPost[12,2:7]),beside=T,main="Q49R: Post Intervention",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[3,2:7],sgBDiff[3,2:7],sgCDiff[3,2:7]),beside=T,main="Q40: Pre to post difference",xlab="Teacher response",ylab="Frequency")
+barplot(rbind(sgADiff[12,2:7],sgBDiff[12,2:7],sgCDiff[12,2:7]),beside=T,main="Q49R: Pre to post difference", xlab="Teacher response",ylab="Frequency")
+
+
+sgADiff[3,5]/sd(shifts)
+sgBDiff[3,5]/sd(shifts)
+sgCDiff[3,4]/sd(shifts)
+sgBDiff[3,4]/sd(shifts)
 
 
 
