@@ -259,6 +259,11 @@ modularity(postNetBBT,membership = supergroups)
 # 0.4645336 PG7 -> C R
 ```
 
+## Evaluate quality of Optimal Super Group Solution
+```{r quality-super-group, echo=F}
+
+```
+
 ## Characterise Super Groups
 ```{r characterise-super-groups, echo=F}
 ##CHARACTERISE SUPERGROUPS
@@ -515,6 +520,35 @@ barplot(rbind(sgADiff[12,2:7],sgBDiff[12,2:7],sgCDiff[12,2:7]),beside=T,main="Q4
 
 ```
 
+## Kruskal-Wallis and Nemenyi tests
+
+```{r kruskal-wallis-nemenyi, echo=F}
+ans38 <- kwAllPairsNemenyiTest(newdata$post38 ~ supergroups, dist="Chisquare")
+summary(ans38)
+ans39 <- kwAllPairsNemenyiTest(newdata$post39 ~ supergroups, dist="Chisquare")
+summary(ans39)
+ans40 <- kwAllPairsNemenyiTest(newdata$post40 ~ supergroups, dist="Chisquare")
+summary(ans40)
+ans41 <- kwAllPairsNemenyiTest(newdata$post41 ~ supergroups, dist="Chisquare")
+summary(ans41)
+ans42 <- kwAllPairsNemenyiTest(newdata$post42 ~ supergroups, dist="Chisquare")
+summary(ans42)
+ans43 <- kwAllPairsNemenyiTest(newdata$post43 ~ supergroups, dist="Chisquare")
+summary(ans43)
+
+ans44 <- kwAllPairsNemenyiTest(newdata$post44 ~ supergroups, dist="Chisquare")
+summary(ans44)
+ans45 <- kwAllPairsNemenyiTest(newdata$post45 ~ supergroups, dist="Chisquare")
+summary(ans45)
+ans46 <- kwAllPairsNemenyiTest(newdata$post46 ~ supergroups, dist="Chisquare")
+summary(ans46)
+ans47 <- kwAllPairsNemenyiTest(newdata$post47 ~ supergroups, dist="Chisquare")
+summary(ans47)
+ans48 <- kwAllPairsNemenyiTest(newdata$post48 ~ supergroups, dist="Chisquare")
+summary(ans48)
+ans49 <- kwAllPairsNemenyiTest(newdata$post49 ~ supergroups, dist="Chisquare")
+summary(ans49)
+```
 ## Segregation analysis
 ```{r segregation-analysis, echo=F}
 resampleX(as.numeric(supergroups),LWG,2,1000)
@@ -531,7 +565,11 @@ resampleX(as.numeric(supergroups),attributesT$postGroup,2,1000)
 ```
 
 ##Entropy analysis
-
+```{r entropy-analysis, echo=F}
+```
 ##Single question analyses
+```{r single-question-analysis, echo=F}
+
+```
 
 
