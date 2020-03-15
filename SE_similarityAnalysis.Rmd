@@ -9,7 +9,7 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Description
+## Loading libraries and functions
 
 
 ```{r libraries_and_functions}
@@ -23,10 +23,11 @@ source("R_scripts/backboneExtraction.r")
 source("R_scripts/segregation.r")
 ```
 
-## Load data
+## Load data and have a looksie
 ```{r load-data, echo=F}
 mydata<-read.csv("Data/dataset.csv",sep=";")
 mydata$X<-c(1:length(mydata$Name))
+mydata
 ```
 
 ## Make respondent similarity networks
@@ -626,7 +627,7 @@ resampleX(as.numeric(supergroups),attributesT$preGroup,2,1000)
 resampleX(as.numeric(supergroups),attributesT$postGroup,2,1000)
 ```
 
-##Entropy analysis
+## Entropy analysis
 This is the entropy analysis.
 
 ```{r entropy-analysis, echo=F}
@@ -658,7 +659,7 @@ points(Sc/Smax,pch="C",col="red")
 
 ```
 
-##Single question analyses
+## Single question analyses
 This is the single questions analyses.
 ```{r single-question-analysis, echo=F}
 shifts<-c(as.numeric(sgADiff),as.numeric(sgBDiff),as.numeric(sgCDiff))

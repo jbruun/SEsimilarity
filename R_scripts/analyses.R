@@ -2,7 +2,7 @@
 #It contains most of the analysis done in the main article. 
 
 
-
+###Libraries and other functions needed
 library(igraph)
 library(PMCMRplus)
 library(pgirmess)
@@ -14,12 +14,13 @@ source("R_scripts/backboneExtraction.r")
 source("R_scripts/segregation.r")
 
 
+#Read data
 mydata<-read.csv("Data/dataset.csv",sep=";")
 mydata$X<-c(1:length(mydata$Name))
+mydata
 
 
-
-#Respondent similarity network
+#Make respondent similarity network
   #Name respondents
 resp<-paste("R",c(1:length(mydata$X)),sep="") 
   #Function for calculating frequencies (here equated with probabilities) of responses
