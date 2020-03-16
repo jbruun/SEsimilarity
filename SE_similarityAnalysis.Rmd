@@ -5,12 +5,15 @@ date: "3/12/2020"
 output: github_document
 ---
 
-```{r setup, include=FALSE, cache=FALSE}
+```{r setup, include=FALSE, cache=T}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+This document is part of the supplement for:
+Bruun, J.; Evans, R.H. Network Analysis of Survey Data to Identify Non-Homogeneous Teacher Self-Efficacy Development in Using Formative Assessment Strategies. Educ. Sci. 2020, 10, 54. https://doi.org/10.3390/educsci10030054 
+
+It shows how to create similarity networks using our anonymised data and proceeds to show how we did the full analysis.
 
 ## Loading libraries and functions
-
 
 ```{r libraries_and_functions}
 library(igraph)
@@ -24,6 +27,13 @@ source("R_scripts/segregation.r")
 ```
 
 ## Load data and have a looksie
+The full data set consists of 93 respondents, 64 of whom participated in the project. The data contains responses from pre intervention and post intervention to 12 questions about attributes of self-efficacy. See Bruun & Evans (2020) for details. Background variables are
+
+* gender (however, the data is incomplete, so probably not very useful)
+* years of teaching categories (1= less than 4 years, 2 = 5-10 years, 3 = 11-20 years, 4 = more than 20 years)
+* local working group (LWG) number (the groups in which teachers worked during the intervention)
+* STEM subjects taught by teacher (1 if they teach the subject, 0 if they do not)
+
 ```{r load-data, echo=F}
 mydata<-read.csv("Data/dataset.csv",sep=";")
 mydata$X<-c(1:length(mydata$Name))
@@ -31,9 +41,17 @@ mydata
 ```
 
 ## Make respondent similarity networks
-```{r make-networks, echo=F}
-  #Name respondents
-resp<-paste("R",c(1:length(mydata$X)),sep="") 
+### Define functions
+Here is the overall idea behind the functions:
+
+* Function 'pmat' replaces responses (here, 1, 2, 3, 4, 5 and NA) with the information content in that response. E.g. if half had answered 1 and half had answered 5 on Q38 the probability of drawing a 1 at ranom would be 0.5 and the information I = -log2(0.5) = 1. Then all entries in the column corresonding to Q38 would be 1. Function 'pmat' uses function 'probs'. 
+  + Function 'probs' calculates the frequency of each question response. Here, a 1 on Q38, for example, is different from a 1 on Q39 and so on.
+* Function 'simRes' calculates the similarity between two respondents. It uses Lin's (1998) information theoretical measure cited in Bruun & Evans (2020). The function uses both the actual responses and their information content as calculated by 'pmat'.
+  + Function 'simResk' calculates the similarity between one respondent and all other respondents.
+  + Function 'simMat' runs 'simResk' for all respondents
+
+```{r make-networks, echo=T}
+
   #Function for calculating frequencies (here equated with probabilities) of responses
 probs<-function(mydata,n){
   a<-as.numeric(names(table(mydata[,n])))
@@ -45,16 +63,8 @@ probs<-function(mydata,n){
   x[which(is.na(mydata[,n]))]<-p[6]
   return(x)
 }
-  #Identify which columns contain pre and which contain post responses. 
-names(mydata[3:14]) #Columns for pre
-names(mydata[15:26]) #Columns for post
-post<-mydata[15:26] #Responses to post survey questions
-post[is.na(post)]<-100 #R does not like to perform calculations with NAs
-pre<-mydata[3:14] # We will compare pre community structure with post community structure
-pre[is.na(pre)]<-100
 
-
-  #Function which transforms frequencies/probabilities to information (bits)
+#Function which transforms frequencies/probabilities to information (bits)
 pmat<-function(data){
 pmat<-matrix(0,ncol=length(data),nrow=length(data[,1]))
 for(j in 1:length(data)){
@@ -85,7 +95,7 @@ simResk<-function(k,inf,d){
   return(simVec)
 }
 
-  #Function for making similarity matrix. 
+  #Function for making similarity matrix. Really just a for-loop that uses simResk 
 simMatrix<-function(d){
   inf<-pmat(d)
   similarityMatrix<-matrix(data=0,ncol=length(d[,1]),nrow=length(d[,1]))
@@ -95,12 +105,30 @@ simMatrix<-function(d){
   }
   return(similarityMatrix)
 }
+```
 
-  #Functions are now used to create a post similarity network
+
+### Use functions to create networks
+Using the above fundtions, we make a pre intervention and a post intervention network for participating teacher. Then, we extract a backbone-version of those networks. The reasoning behind our use of backbone networks is:
+
+* We use local adaptive networks sparsification (LANS) by Foti et al (2011). This algorithm evaluates links locally, via a threshold p-like value, and per node, rather than employing a global rule. 
+* We set the threshold value to the minimum value that still preserves overall network connectivity. 
+* A link is preserved if it is significant (below threshold) for at least one node. 
+```{r making-networks}
+  #Name respondents
+resp<-paste("R",c(1:length(mydata$X)),sep="")   
+#Identify which columns contain pre and which contain post responses. 
+names(mydata[3:14]) #Columns for pre
+names(mydata[15:26]) #Columns for post
+post<-mydata[15:26] #Responses to post survey questions
+post[is.na(post)]<-100 #R does not like to perform calculations with NAs
+pre<-mydata[3:14] # We will compare pre community structure with post community structure
+pre[is.na(pre)]<-100
+
+ #Functions are now used to create a post similarity network
 postSim<-simMatrix(post)
 respTot<-resp
 respT<-resp[mydata$control=="n"]
-respC<-resp[mydata$control=="y"]
 
 resp<-respT
 preSimT<-simMatrix(pre[mydata$control=="n",])
@@ -112,17 +140,25 @@ V(preNetT)$id<-respT
 V(postNetT)$id<-respT
 
 #Extract backbone networks
-preNetBBT<-backboneNetwork(preNetT,0.0176,2) #Alpha value set to minimum value that keeps the network connected
+preNetBBT<-backboneNetwork(preNetT,0.0176,2) #Alpha value set to minimum value that keeps network connected
 postNetBBT<-backboneNetwork(postNetT,0.0335,2)# This is the network we focus on in the article.
 
 write.graph(postNetBBT,"postNetBBT.net",format=c("pajek"))
 write.graph(preNetBBT,"preNetBBT.net",format=c("pajek"))
-
-plot(postNetT)
-plot(postNetBBT)
 ```
 
-##Infomap clustering
+Plot of post networks to show differences. The first plot contains all links, the second the backbone network.
+
+```{r plot-networks}
+postNetT
+plot(postNetT, main="Post Net",sub="Labels show LWG-number",vertex.label=mydata$LWG[mydata$control=='n'])
+plot(degree.distribution(postNetT,cumulative = T),log="xy", xlab="Degree, k",ylab="P(k>k')", main="Cumulative degree distribution")
+postNetBBT
+plot(postNetBBT, main="Post Net Backbone",sub="Labels show LWG-number",vertex.label=mydata$LWG[mydata$control=='n'])
+plot(degree.distribution(postNetBBT,cumulative = T),log="xy", xlab="Degree, k",ylab="P(k>k')", main="Cumulative degree distribution")
+```
+
+## Infomap clustering
 ```{r infomap-clusering, echo=F}
 #1000 infomaps
 #CODE FOR WRITING 1000 INFOMAPS IN INFOMAP FOLDER:
@@ -605,15 +641,7 @@ summary(ans49)
 ```
 ## Segregation analysis
 ```{r segregation-analysis, echo=F}
-LWG<-vector()
-LWG[mydata$country=="DK"]<-1
-LWG[mydata$country=="CH"]<-2
-LWG[mydata$country=="FI"]<-3
-LWG[mydata$country=="CZ"]<-4
-LWG[mydata$country=="D"]<-5
-LWG[mydata$country=="F"]<-6
-
-LWG<-LWG[mydata$control=="n"]
+LWG<-mydata$LWG[mydata$control=="n"]
 resampleX(as.numeric(supergroups),LWG,2,1000)
 resampleX(as.numeric(supergroups),attributesT$yearsTeaching,2,1000)
 resampleX(as.numeric(supergroups),attributesT$physics,2,1000)

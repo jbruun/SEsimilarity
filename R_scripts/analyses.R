@@ -675,15 +675,8 @@ sgBDiff[5,6]/sd(shifts)
 sgCDiff[5,6]/sd(shifts)
 
 ####LWG###
-LWG<-vector()
-LWG[mydata$country=="DK"]<-1
-LWG[mydata$country=="CH"]<-2
-LWG[mydata$country=="FI"]<-3
-LWG[mydata$country=="CZ"]<-4
-LWG[mydata$country=="D"]<-5
-LWG[mydata$country=="F"]<-6
 
-LWG<-LWG[mydata$control=="n"]
+LWG<-mydata$LWG[mydata$control=="n"]
 
 resampleX(as.numeric(supergroups),LWG,2,1000)
 resampleX(as.numeric(supergroups),attributesT$yearsTeaching,2,1000)
