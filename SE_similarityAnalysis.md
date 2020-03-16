@@ -586,16 +586,24 @@ write.graph(postNetBBT,"postNetBBT.net",format=c("pajek"))
 write.graph(preNetBBT,"preNetBBT.net",format=c("pajek"))
 ```
 
-Plot of post networks to show differences. The first plot contains all
-links, the second the backbone networks
+For a simple comparison of raw and backbone post networks, the following
+code shows different representations of them
+
+  - The stored igraph objects with information about type, number of
+    links and nodes.
+  - The cumulative degree distributions; the frequency of nodes with k
+    connections or below.
+  - A force-based plot with LWG-labels.
+
+<!-- end list -->
 
 ``` r
 postNetT
 ```
 
-    ## IGRAPH a28676d D-W- 64 3672 -- 
+    ## IGRAPH 5ea07e8 D-W- 64 3672 -- 
     ## + attr: id (v/c), weight (e/n)
-    ## + edges from a28676d:
+    ## + edges from 5ea07e8:
     ##   [1] 1-> 2 1-> 3 1-> 4 1-> 5 1-> 6 1-> 8 1-> 9 1->10 1->11 1->12 1->13 1->14
     ##  [13] 1->15 1->16 1->17 1->18 1->19 1->20 1->21 1->22 1->23 1->24 1->25 1->26
     ##  [25] 1->27 1->28 1->29 1->30 1->31 1->32 1->33 1->34 1->35 1->36 1->37 1->38
@@ -622,9 +630,9 @@ plot(degree.distribution(postNetT,cumulative = T),log="xy", xlab="Degree, k",yla
 postNetBBT
 ```
 
-    ## IGRAPH c6efee9 U-W- 64 106 -- 
+    ## IGRAPH bb42f18 U-W- 64 106 -- 
     ## + attr: id (v/c), weight (e/n)
-    ## + edges from c6efee9:
+    ## + edges from bb42f18:
     ##  [1]  1--20  1--26  1--30  1--35  1--36  2-- 5  2--13  2--56  2--61  3-- 6
     ## [11]  3--33  3--55  4--36  4--51  5--18  5--33  5--46  6--31  6--45  6--51
     ## [21]  6--57  7--12  7--50  7--53  8--45  8--55  9--10  9--13  9--46  9--59
@@ -647,17 +655,124 @@ plot(degree.distribution(postNetBBT,cumulative = T),log="xy", xlab="Degree, k",y
 
 ![](SE_similarityAnalysis_files/figure-gfm/plot-networks-4.png)<!-- -->
 
-\#\#Infomap clustering
+## Infomap clustering
+
+We used the version of infomap that can be downloaded from
+<https://www.mapequation.org>. Igraph also has a version of infomap
+installed, but we found that it was not as stable as the ones found on
+mapequation. Below we include the code we used to generate 1000 cluster
+solutions using a standard Mac terminal.
+
+    Code for running infomap 100 times and placing the results in a specific folder:
+    for i in {1..1000}; do ./pathToNetwork/[name].net /pathtoFolder/1000Infomaps[name]/
+    --out-name $i -2 --clu --map -s$i; done
+
+The Data-folder contains the results of this code and we use those
+results for the further analysis. Below we evaluate the internal
+consistency of cluster solutions for the pre intervention and post
+intervention networks. Also, we compare the most frequent pre solution
+to the most frequent post solution.
+
+``` r
+files<-vector()
+for (i in 1:1000){
+  files[i]<-paste("Data/1000InfomapsPreBBT/",i,".clu",sep = "")
+  
+}
+#Read in cluster solutions
+csvs<-lapply(files,read.csv,skip=2,header=F,sep="")
+
+a<-matrix(data=0,nrow=1000,ncol=64)
+for (i in 1:1000){
+  a[i,]<-csvs[[i]][ order(csvs[[i]][,1]),2 ]
+  
+}
+
+comp<-function(j){
+  nmi<-vector()
+  for(i in 1:1000){
+    nmi[i]<-compare(a[i,],a[j,],method="nmi")  
+    
+  }
+  return(nmi)  
+} 
+
+nmiM<-matrix(data=0,nrow=1000,ncol=1000)
+for(i in 1:1000){
+  nmiM[i,]<-comp(i)
+  
+}
+
+mean(nmiM) #Normalized mutual information of pre-cluster solutions
+```
 
     ## [1] 0.9723268
 
+``` r
+sd(nmiM) #Standard deviation of NMI
+```
+
     ## [1] 0.02760185
+
+``` r
+files<-vector()
+for (i in 1:1000){
+  files[i]<-paste("Data/1000InfomapsPostBBT/",i,".clu",sep = "")
+  
+}
+#setwd("..") #go to where the files are
+csvs<-lapply(files,read.csv,skip=2,header=F,sep="")
+
+a<-matrix(data=0,nrow=1000,ncol=64)
+for (i in 1:1000){
+  a[i,]<-csvs[[i]][ order(csvs[[i]][,1]),2 ]
+  
+}
+
+comp<-function(j){
+  nmi<-vector()
+  for(i in 1:1000){
+    nmi[i]<-compare(a[i,],a[j,],method="nmi")  
+    
+  }
+  return(nmi)  
+} 
+
+nmiM<-matrix(data=0,nrow=1000,ncol=1000)
+for(i in 1:1000){
+  nmiM[i,]<-comp(i)
+  
+}
+
+mean(nmiM)#Normalized mutual information of post-cluster solutions
+```
 
     ## [1] 0.9455897
 
+``` r
+sd(nmiM)#Standard deviation of NMI
+```
+
     ## [1] 0.03625122
 
+``` r
+#Compare pre to post groupings
+#Get most frequent groupings
+postBBTgroup<-read.csv("Data/1000InfomapsPostBBT/1.clu",skip=2,header=F,sep="") #for us it was the first grouping.
+postBBTgroup<-postBBTgroup[order(postBBTgroup$V1),]
+preBBTgroup<-read.csv("Data/1000InfomapsPreBBT/2.clu",skip=2,header=F,sep="") #for us it was the first grouping.
+preBBTgroup<-preBBTgroup[order(preBBTgroup$V1),]
+compare(preBBTgroup$V2,postBBTgroup$V2,method="nmi") 
+```
+
     ## [1] 0.4346165
+
+``` r
+#Attach groupings to attributes data frame
+attributesT<-read.csv("Data/attributesT.csv")
+attributesT$preGroup<-preBBTgroup$V2
+attributesT$postGroup<-postBBTgroup$V2
+```
 
 ## Find Optimal Super Group Solution
 
@@ -983,27 +1098,27 @@ plot(degree.distribution(postNetBBT,cumulative = T),log="xy", xlab="Degree, k",y
 
 ## Segregation analysis
 
-    ## [1] 10.32658
+    ## [1] 9.609773
 
-    ## [1] 0.2685563
+    ## [1] 0.2486196
 
-    ## [1] -0.02980526
+    ## [1] -0.04889402
 
-    ## [1] -0.5970898
+    ## [1] -0.5642743
 
-    ## [1] -0.4920884
+    ## [1] -0.51623
 
-    ## [1] 1.142066
+    ## [1] 1.35792
 
-    ## [1] 2.836271
+    ## [1] 2.985931
 
-    ## [1] 0.04523868
+    ## [1] 0.05745959
 
-    ## [1] 1.159058
+    ## [1] 1.086237
 
-    ## [1] 3.034806
+    ## [1] 2.901326
 
-    ## [1] 16.49407
+    ## [1] 15.67396
 
 ## Entropy analysis
 

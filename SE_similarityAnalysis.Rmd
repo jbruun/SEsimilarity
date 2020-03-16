@@ -147,7 +147,11 @@ write.graph(postNetBBT,"postNetBBT.net",format=c("pajek"))
 write.graph(preNetBBT,"preNetBBT.net",format=c("pajek"))
 ```
 
-Plot of post networks to show differences. The first plot contains all links, the second the backbone network.
+For a simple comparison of raw and backbone post networks, the following code shows different representations of them
+
+* The stored igraph objects with information about type, number of links and nodes. 
+* The cumulative degree distributions; the frequency of nodes with k connections or below. 
+* A force-based plot with LWG-labels. 
 
 ```{r plot-networks}
 postNetT
@@ -159,18 +163,23 @@ plot(degree.distribution(postNetBBT,cumulative = T),log="xy", xlab="Degree, k",y
 ```
 
 ## Infomap clustering
-```{r infomap-clusering, echo=F}
-#1000 infomaps
-#CODE FOR WRITING 1000 INFOMAPS IN INFOMAP FOLDER:
-#for i in {1..1000}; do ./pathToNetwork/[name].net /pathtoFolder/1000Infomaps[name]/
-#--out-name $i -2 --clu --map -s$i; done
+We used the version of infomap that can be downloaded from https://www.mapequation.org. Igraph also has a version of infomap installed, but we found that it was not as stable as the ones found on mapequation. Below we include the code we used to generate 1000 cluster solutions using a standard Mac terminal. 
+
+```
+Code for running infomap 100 times and placing the results in a specific folder:
+for i in {1..1000}; do ./pathToNetwork/[name].net /pathtoFolder/1000Infomaps[name]/
+--out-name $i -2 --clu --map -s$i; done
+```
+The Data-folder contains the results of this code and we use those results for the further analysis. Below we evaluate the internal consistency of cluster solutions for the pre intervention and post intervention networks. Also, we compare the most frequent pre solution to the most frequent post solution. 
+
+```{r infomap-clustering, echo=T}
 
 files<-vector()
 for (i in 1:1000){
   files[i]<-paste("Data/1000InfomapsPreBBT/",i,".clu",sep = "")
   
 }
-#setwd("..") #go to where the files are
+#Read in cluster solutions
 csvs<-lapply(files,read.csv,skip=2,header=F,sep="")
 
 a<-matrix(data=0,nrow=1000,ncol=64)
